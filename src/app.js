@@ -1,15 +1,30 @@
 const express = require("express");
+const connectDB = require("./config/database");
+const cookieParser = require("cookie-parser");
+require("dotenv").config();
 
 const app = express();
+app.use(express.json());
+app.use(cookieParser());
 
-app.get("/", (req, res) => {
-  res.send("hello world");
-});
+const userAuth = require("./middlewares/userAuth");
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const connectionRouter = require("./routes/connectionRouter");
+const postsRouter = require("./routes/postsRouter");
+const groupRouter = require("./routes/groupRouter");
 
-app.get("/h", (req, res) => {
-  res.send("hello worhello worldhello worldhello world");
-});
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", connectionRouter);
+app.use("/", postsRouter);
+app.use("/", groupRouter);
 
-app.listen(3000, (req, res) => {
-  console.log("Serve Started on 3000");
-});
+connectDB()
+  .then(() => {
+    console.log("Database connection established...");
+    app.listen(process.env.PORT, () => {
+      console.log("server started on " + process.env.PORT);
+    });
+  })
+  .catch((error) => console.log(error.message));
