@@ -57,13 +57,12 @@ authRouter.post("/signup", async (req, res) => {
 });
 
 authRouter.post("/login", async (req, res) => {
-  const { emailId, password } = req.body;
-
-  if (!emailId) {
-    throw new Error("EmailId is missing");
-  }
-
   try {
+    const { emailId, password } = req.body;
+
+    if (!emailId) {
+      throw new Error("EmailId is missing");
+    }
     const user = await User.findOne({ emailId: emailId });
     if (!user) {
       throw new Error("Invalid Credentials");
@@ -82,13 +81,13 @@ authRouter.post("/login", async (req, res) => {
       expires: new Date(Date.now() + 8 * 3600000),
       httpOnly: true,
     });
-    res.send("User Logged In");
+    res.send(user);
   } catch (error) {
     res.status(400).send(error.message);
   }
 });
 
-authRouter.post("/logout", async (req, res) => {
+authRouter.get("/logout", async (req, res) => {
   try {
     const { token } = req.cookies;
     if (!token) {
