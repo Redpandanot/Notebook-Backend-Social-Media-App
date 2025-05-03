@@ -43,9 +43,8 @@ connectionRouter.post(
           },
         ],
       });
-      console.log(connectionExists);
 
-      if (connectionExists) {
+      if (connectionExists.length !== 0) {
         throw new Error("Request already exists");
       }
 
@@ -101,12 +100,12 @@ connectionRouter.post(
 connectionRouter.post("/follow/:userId", userAuth, async (req, res) => {
   try {
     const followerId = req.user._id;
-    const { followeeId } = req.params;
+    const { userId: followeeId } = req.params;
 
     const followeeExists = await User.findById(followeeId);
 
     if (!followeeExists) {
-      throw new Error("User you are trying to follow does not exist");
+      throw new Error("The user you are trying to follow does not exist");
     }
 
     const followRelation = await Followers.findOne({
@@ -122,7 +121,7 @@ connectionRouter.post("/follow/:userId", userAuth, async (req, res) => {
       followee: followeeId,
       follower: followerId,
     });
-
+    await data.save();
     res.send(data);
   } catch (error) {
     res.status(400).send(error.message);
@@ -132,20 +131,40 @@ connectionRouter.post("/follow/:userId", userAuth, async (req, res) => {
 connectionRouter.post("/unfollow/:userId", userAuth, async (req, res) => {
   try {
     const followerId = req.user._id;
-    const { followeeId } = req.params;
+    const { userId: followeeId } = req.params;
 
     const followeeExists = await User.findById(followeeId);
 
     if (!followeeExists) {
-      throw new Error("User you are trying to follow does not exist");
+      throw new Error("User you are trying to unfollow does not exist");
     }
 
     const data = await Followers.findOneAndDelete({
       followee: followeeId,
       follower: followerId,
     });
-
+    if (!data) {
+      throw new Error("this relationship does not exist");
+    }
     res.send(data);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
+connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
+  try {
+    const loggedInUserId = req.user._id;
+
+    const connectionRequest = await Connections.find({
+      toUserId: loggedInUserId,
+    }).populate({
+      path: "fromUserId",
+      select: "firstName",
+    });
+    if (connectionRequest.length === 0) {
+      res.send("no requests exist");
+    } else res.send(connectionRequest);
   } catch (error) {
     res.status(400).send(error.message);
   }

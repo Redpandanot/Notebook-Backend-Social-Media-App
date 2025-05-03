@@ -60,4 +60,18 @@ postsRouter.post("/posts/group/create/:groupId", userAuth, async (req, res) => {
   }
 });
 
+postsRouter.get("/posts/view", userAuth, async (req, res) => {
+  try {
+    const user = req.user._id;
+
+    const post = await Posts.find({ userId: user }).populate({
+      path: "userId",
+      select: "firstName",
+    });
+    res.send(post);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
 module.exports = postsRouter;
