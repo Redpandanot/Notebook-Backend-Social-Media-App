@@ -160,7 +160,7 @@ connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
       toUserId: loggedInUserId,
     }).populate({
       path: "fromUserId",
-      select: "firstName",
+      select: "firstName lastName",
     });
     if (connectionRequest.length === 0) {
       res.send("no requests exist");
@@ -169,5 +169,49 @@ connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
     res.status(400).send(error.message);
   }
 });
+
+//list of all friends, and followers
+connectionRouter.get("/friends-list", userAuth, async (req, res) => {
+  try {
+    const user = req.user._id;
+    const friends = await Connections.find({
+      $or: [
+        {
+          fromUserId: user,
+          status: "accepted",
+        },
+        {
+          toUserId: user,
+          status: "accepted",
+        },
+      ],
+    })
+      .populate({
+        path: "fromUserId",
+        select: "firstName lastName",
+      })
+      .populate({
+        path: "toUserId",
+        select: "firstName lastName",
+      });
+    const organisedFriendsList = friends.map((connection) => {
+      const friend = connection.fromUserId._id.equals(user)
+        ? connection.toUserId
+        : connection.fromUserId;
+      return {
+        _id: friend._id,
+        firstName: friend.firstName,
+        lastName: friend.lastName,
+      };
+    });
+    res.send(organisedFriendsList);
+  } catch (error) {
+    res.json({
+      status: error.status,
+      message: error.message,
+    });
+  }
+});
+// list of other users
 
 module.exports = connectionRouter;
