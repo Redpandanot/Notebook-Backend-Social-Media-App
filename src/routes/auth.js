@@ -11,18 +11,7 @@ authRouter.post("/signup", async (req, res) => {
     validationSignUp(req);
 
     //encrypt password
-    const {
-      firstName,
-      lastName,
-      emailId,
-      password,
-      gender,
-      age,
-      college,
-      photoUrl,
-      about,
-      skills,
-    } = req.body;
+    const { firstName, lastName, emailId, password } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -32,15 +21,9 @@ authRouter.post("/signup", async (req, res) => {
       lastName,
       emailId,
       password: hashedPassword,
-      gender,
-      age,
-      college,
-      photoUrl,
-      about,
-      skills,
     });
     await user.save();
-
+    console.log("user adding done");
     //create jwt
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRECT, {
       expiresIn: "1d",

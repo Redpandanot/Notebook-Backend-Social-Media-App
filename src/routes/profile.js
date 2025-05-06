@@ -5,6 +5,7 @@ const validator = require("validator");
 const profileRouter = express.Router();
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const Connections = require("../models/connections");
 
 profileRouter.get("/profile/view", userAuth, (req, res) => {
   try {
@@ -74,6 +75,22 @@ profileRouter.post("/profile/edit/password", userAuth, async (req, res) => {
     res.status(200).send(user);
   } catch (error) {
     res.send(error.message);
+  }
+});
+
+profileRouter.get("/getAllUsers", userAuth, async (req, res) => {
+  try {
+    const user = req.user._id;
+    const allUsers = await User.find({}).select("firstName lastName emailId");
+    //remove existing friends from this list
+    const existingFriends = await Connections.find({});
+    //remove pending friend requests from this list
+    res.send(allUsers);
+  } catch (error) {
+    res.json({
+      status: 500,
+      message: error.message,
+    });
   }
 });
 

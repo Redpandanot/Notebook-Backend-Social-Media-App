@@ -170,7 +170,6 @@ connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
   }
 });
 
-//list of all friends, and followers
 connectionRouter.get("/friends-list", userAuth, async (req, res) => {
   try {
     const user = req.user._id;
@@ -204,14 +203,14 @@ connectionRouter.get("/friends-list", userAuth, async (req, res) => {
         lastName: friend.lastName,
       };
     });
+    throw new Error("new error");
     res.send(organisedFriendsList);
   } catch (error) {
     res.json({
-      status: error.status,
+      status: 400,
       message: error.message,
     });
   }
 });
-// list of other users
 
 module.exports = connectionRouter;
