@@ -33,7 +33,11 @@ authRouter.post("/signup", async (req, res) => {
       expires: new Date(Date.now() + 8 * 3600000),
       httpOnly: true,
     });
-    res.send("User Signup");
+    res.json({
+      _id: user._id,
+      firstName: user.firstName,
+      emailId: user.emailId,
+    });
   } catch (error) {
     res.status(400).send(error.message);
   }

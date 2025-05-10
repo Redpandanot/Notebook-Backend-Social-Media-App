@@ -46,6 +46,8 @@ const postsSchema = mongoose.Schema(
   }
 );
 
+postsSchema.index({ userId: 1, groupId: 1 });
+
 const postsModel = mongoose.model("Posts", postsSchema);
 
 module.exports = postsModel;

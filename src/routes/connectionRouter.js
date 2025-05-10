@@ -162,9 +162,7 @@ connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
       path: "fromUserId",
       select: "firstName lastName",
     });
-    if (connectionRequest.length === 0) {
-      res.send("no requests exist");
-    } else res.send(connectionRequest);
+    res.send(connectionRequest);
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -203,7 +201,6 @@ connectionRouter.get("/friends-list", userAuth, async (req, res) => {
         lastName: friend.lastName,
       };
     });
-    throw new Error("new error");
     res.send(organisedFriendsList);
   } catch (error) {
     res.json({
