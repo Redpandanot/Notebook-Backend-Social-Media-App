@@ -210,4 +210,51 @@ connectionRouter.get("/friends-list", userAuth, async (req, res) => {
   }
 });
 
+connectionRouter.get("/new-friends", userAuth, async (req, res) => {
+  try {
+    const user = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 2;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
+    //look at the list of all users
+    //ignore existing users
+    //ignore self account
+
+    //get existing friends
+    const existingConnections = await Connections.find({
+      $or: [
+        {
+          fromUserId: user,
+        },
+        {
+          toUserId: user,
+        },
+      ],
+    }).select("fromUserId toUserId");
+
+    const hideExisitingRequests = new Set();
+    existingConnections.forEach((connection) => {
+      hideExisitingRequests.add(connection.fromUserId.toString());
+      hideExisitingRequests.add(connection.toUserId.toString());
+    });
+
+    const users = await User.find({
+      $and: [
+        {
+          _id: { $nin: Array.from(hideExisitingRequests) },
+        },
+        { _id: { $ne: user } },
+      ],
+    })
+      .select("firstName lastName emailId")
+      .skip(skip)
+      .limit(limit);
+
+    res.send(users);
+  } catch (error) {
+    res.send(error);
+  }
+});
+
 module.exports = connectionRouter;

@@ -78,20 +78,20 @@ profileRouter.post("/profile/edit/password", userAuth, async (req, res) => {
   }
 });
 
-profileRouter.get("/getAllUsers", userAuth, async (req, res) => {
-  try {
-    const user = req.user._id;
-    const allUsers = await User.find({}).select("firstName lastName emailId");
-    //remove existing friends from this list
-    const existingFriends = await Connections.find({});
-    //remove pending friend requests from this list
-    res.send(allUsers);
-  } catch (error) {
-    res.json({
-      status: 500,
-      message: error.message,
-    });
-  }
-});
+// profileRouter.get("/getAllUsers", userAuth, async (req, res) => {
+//   try {
+//     const user = req.user._id;
+//     const allUsers = await User.find({}).select("firstName lastName emailId");
+//     //remove existing friends from this list
+//     const existingFriends = await Connections.find({});
+//     //remove pending friend requests from this list
+//     res.send(allUsers);
+//   } catch (error) {
+//     res.json({
+//       status: 500,
+//       message: error.message,
+//     });
+//   }
+// });
 
 module.exports = profileRouter;
