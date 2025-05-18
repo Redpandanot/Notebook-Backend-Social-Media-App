@@ -68,7 +68,18 @@ authRouter.post("/login", async (req, res) => {
       expires: new Date(Date.now() + 8 * 3600000),
       httpOnly: true,
     });
-    res.send(user);
+    res.json({
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      emailId: user.emailId,
+      age: user.age,
+      gender: user.gender,
+      college: user.college,
+      photoUrl: user.photoUrl,
+      about: user.about,
+      skills: user.skills,
+    });
   } catch (error) {
     res.status(400).send(error.message);
   }

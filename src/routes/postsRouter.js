@@ -124,4 +124,18 @@ postsRouter.post("/posts/like/:postId", userAuth, async (req, res) => {
   }
 });
 
+postsRouter.get("/posts/view/:userId", userAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const post = await Posts.find({ userId: userId }).populate({
+      path: "userId",
+      select: "firstName",
+    });
+    res.send(post);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
 module.exports = postsRouter;

@@ -157,7 +157,13 @@ connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
     const loggedInUserId = req.user._id;
 
     const connectionRequest = await Connections.find({
-      toUserId: loggedInUserId,
+      $and: [
+        {
+          toUserId: loggedInUserId,
+        },
+        { status: { $ne: "accepted" } },
+        { status: { $ne: "rejected" } },
+      ],
     }).populate({
       path: "fromUserId",
       select: "firstName lastName",
@@ -217,11 +223,7 @@ connectionRouter.get("/new-friends", userAuth, async (req, res) => {
     let limit = parseInt(req.query.limit) || 2;
     limit = limit > 10 ? 10 : limit;
     const skip = (page - 1) * limit;
-    //look at the list of all users
-    //ignore existing users
-    //ignore self account
 
-    //get existing friends
     const existingConnections = await Connections.find({
       $or: [
         {

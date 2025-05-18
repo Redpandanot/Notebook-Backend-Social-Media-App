@@ -78,6 +78,26 @@ profileRouter.post("/profile/edit/password", userAuth, async (req, res) => {
   }
 });
 
+profileRouter.get("/profile/view/:profileId", userAuth, async (req, res) => {
+  try {
+    const { profileId } = req.params;
+    if (typeof profileId !== "string") {
+      res.send("Invalid Profile");
+    } else {
+      const profileDetail = await User.findById({
+        _id: profileId,
+      });
+      if (!profileDetail) {
+        res.send("User does not exist");
+      } else {
+        res.send(profileDetail);
+      }
+    }
+  } catch (error) {
+    res.send(error.message);
+  }
+});
+
 // profileRouter.get("/getAllUsers", userAuth, async (req, res) => {
 //   try {
 //     const user = req.user._id;
