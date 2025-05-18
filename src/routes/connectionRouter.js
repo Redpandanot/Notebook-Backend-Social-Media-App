@@ -255,7 +255,7 @@ connectionRouter.get("/new-friends", userAuth, async (req, res) => {
 
     res.send(users);
   } catch (error) {
-    res.send(error);
+    res.send(error.message);
   }
 });
 
