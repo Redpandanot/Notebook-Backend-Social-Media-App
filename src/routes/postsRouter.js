@@ -7,6 +7,7 @@ const Likes = require("../models/likes");
 const { validatePosts } = require("../utils/validation");
 const { findOneAndDelete } = require("../models/user");
 const Connections = require("../models/connections");
+const Comments = require("../models/comments");
 
 postsRouter.post("/posts/create", userAuth, async (req, res) => {
   try {
@@ -184,4 +185,28 @@ postsRouter.get("/posts/feed", userAuth, async (req, res) => {
   }
 });
 
+postsRouter.post("/posts/comment/:postId", userAuth, async (req, res) => {
+  try {
+    const user = req.user._id;
+    const { postId } = req.params;
+    const comment = req.body.comment;
+    const parentId = req.body.parentId;
+    const addTODb = new Comments({
+      postId,
+      userId: user,
+      comment,
+      likeCount: 0,
+      replyCount: 0,
+      parentCommentId: parentId,
+    });
+    addTODb.save();
+    //upadte comment count
+    const updateCommentCount = await Posts.findByIdAndUpdate(postId, {
+      $inc: { commentCount: 1 },
+    });
+    res.send(addTODb);
+  } catch (error) {
+    res.send(error.message);
+  }
+});
 module.exports = postsRouter;
