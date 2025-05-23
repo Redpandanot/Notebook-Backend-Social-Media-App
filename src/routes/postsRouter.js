@@ -177,7 +177,11 @@ postsRouter.get("/posts/feed", userAuth, async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .populate({
+        path: "userId",
+        select: "firstName lastName",
+      });
 
     res.send(posts);
   } catch (error) {

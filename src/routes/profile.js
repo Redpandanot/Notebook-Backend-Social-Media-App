@@ -6,6 +6,9 @@ const profileRouter = express.Router();
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const Connections = require("../models/connections");
+const multer = require("multer");
+const { upload, cloudinary } = require("../utils/cloudinaryConfig");
+const fs = require("fs/promises");
 
 profileRouter.get("/profile/view", userAuth, (req, res) => {
   try {
@@ -98,20 +101,70 @@ profileRouter.get("/profile/view/:profileId", userAuth, async (req, res) => {
   }
 });
 
-// profileRouter.get("/getAllUsers", userAuth, async (req, res) => {
-//   try {
-//     const user = req.user._id;
-//     const allUsers = await User.find({}).select("firstName lastName emailId");
-//     //remove existing friends from this list
-//     const existingFriends = await Connections.find({});
-//     //remove pending friend requests from this list
-//     res.send(allUsers);
-//   } catch (error) {
-//     res.json({
-//       status: 500,
-//       message: error.message,
-//     });
-//   }
-// });
+profileRouter.post(
+  "/profile/addImage",
+  userAuth,
+  upload.single("file"),
+  async (req, res) => {
+    const user = req.user;
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded." });
+    }
+
+    const localFilePath = req.file.path;
+    console.log("here 1 - Local file path:", localFilePath);
+    try {
+      const cloudImg = await cloudinary.uploader.upload(localFilePath, {
+        folder: "profileImg",
+      });
+
+      const updatedUser = await User.findByIdAndUpdate(
+        { _id: user._id },
+        {
+          photoUrl: cloudImg.secure_url,
+        },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        await cloudinary.uploader.destroy(cloudImg.public_id);
+        return res
+          .status(404)
+          .json({ message: "User not found or unable to update." });
+      }
+
+      await fs.unlink(localFilePath);
+
+      console.log(`Local file deleted: ${localFilePath}`);
+
+      res.status(200).json({
+        message: "Image uploaded and profile updated successfully!",
+        updatedUser: updatedUser,
+        imageUrl: cloudImg.secure_url,
+      });
+    } catch (error) {
+      console.error("Error during image upload or processing:", error);
+
+      if (localFilePath) {
+        try {
+          await fs.unlink(localFilePath);
+          console.log(
+            `Error occurred, but local file deleted: ${localFilePath}`
+          );
+        } catch (unlinkError) {
+          console.error(
+            `Failed to delete local file ${localFilePath} during error handling:`,
+            unlinkError
+          );
+        }
+      }
+
+      res.status(500).json({
+        message: "Server error during image upload or profile update",
+        error: error.message,
+      });
+    }
+  }
+);
 
 module.exports = profileRouter;
