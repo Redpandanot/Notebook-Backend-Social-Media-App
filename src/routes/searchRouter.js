@@ -2,9 +2,7 @@ const express = require("express");
 const searchRouter = express.Router();
 const userAuth = require("../middlewares/userAuth");
 const User = require("../models/user");
-
-const userSafeData =
-  "_id firstName lastName emailId age gender college photoUrl about skills";
+const { userSafeData } = require("../utils/constants");
 
 searchRouter.get("/search", userAuth, async (req, res) => {
   try {

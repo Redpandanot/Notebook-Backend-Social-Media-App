@@ -101,10 +101,15 @@ postsRouter.post("/posts/like/:postId", userAuth, async (req, res) => {
     });
 
     if (doesLikeExist) {
-      await Posts.findByIdAndUpdate(postId, { $inc: { likeCount: -1 } });
+      const unlikePost = await Posts.findByIdAndUpdate(
+        postId,
+        { $inc: { likeCount: -1 } },
+        { new: true }
+      );
       res.json({
         status: 200,
         message: "Post unliked",
+        likeCount: unlikePost.likeCount,
       });
     } else {
       const like = new Likes({
@@ -112,10 +117,15 @@ postsRouter.post("/posts/like/:postId", userAuth, async (req, res) => {
         postId: postId,
       });
       await like.save();
-      await Posts.findByIdAndUpdate(postId, { $inc: { likeCount: 1 } });
+      const likePost = await Posts.findByIdAndUpdate(
+        postId,
+        { $inc: { likeCount: 1 } },
+        { new: true }
+      );
       res.json({
         status: 200,
         message: "post liked successfully",
+        likeCount: likePost.likeCount,
       });
     }
   } catch (error) {

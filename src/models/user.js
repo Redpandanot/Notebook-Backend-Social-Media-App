@@ -55,12 +55,24 @@ const userSchema = new mongoose.Schema(
       minLength: 3,
       maxLength: 30,
     },
-    photoUrl: {
-      type: String,
-      validate(value) {
-        if (!validator.isURL(value)) {
-          throw new Error("Invalid URL");
-        }
+    photo: {
+      type: {
+        url: {
+          type: String,
+          validate(value) {
+            if (!validator.isURL(value)) {
+              throw new Error("Invalid URL");
+            }
+          },
+        },
+        public_id: {
+          type: String,
+        },
+      },
+      required: false,
+      default: {
+        url: "https://res.cloudinary.com/doknrbhso/image/upload/v1746265741/samples/animals/cat.jpg",
+        public_id: "default_placeholder",
       },
     },
     about: {
