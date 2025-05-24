@@ -118,19 +118,43 @@ profileRouter.post(
         folder: "profileImg",
       });
 
+      console.log("Current image id", user.photo.public_id);
+
+      const hasImage = user.photo.public_id !== "default_placeholder";
+
+      if (hasImage) {
+        const deleteImageFromCloudinary = await cloudinary.uploader.destroy(
+          user.photo.public_id
+        );
+        console.log(
+          "Existing user image deleted from cloudinary",
+          deleteImageFromCloudinary
+        );
+      }
+
       const updatedUser = await User.findByIdAndUpdate(
         { _id: user._id },
         {
-          photoUrl: cloudImg.secure_url,
+          photo: {
+            url: cloudImg.secure_url,
+            public_id: cloudImg.public_id,
+          },
         },
-        { new: true }
+        { new: true, runValidators: true }
       );
 
       if (!updatedUser) {
         await cloudinary.uploader.destroy(cloudImg.public_id);
-        return res
-          .status(404)
-          .json({ message: "User not found or unable to update." });
+        await User.findByIdAndUpdate(
+          { _id: user._id },
+          {
+            photo: {
+              url: "https://res.cloudinary.com/doknrbhso/image/upload/v1746265741/samples/animals/cat.jpg",
+              public_id: "default_placeholder",
+            },
+          }
+        );
+        return res.status(404).json({ message: "Unable to update." });
       }
 
       await fs.unlink(localFilePath);

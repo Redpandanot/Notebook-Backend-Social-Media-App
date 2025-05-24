@@ -76,7 +76,7 @@ authRouter.post("/login", async (req, res) => {
       age: user.age,
       gender: user.gender,
       college: user.college,
-      photoUrl: user.photoUrl,
+      photo: user.photo,
       about: user.about,
       skills: user.skills,
     });
