@@ -8,8 +8,6 @@ searchRouter.get("/search", userAuth, async (req, res) => {
   try {
     const user = req.user._id;
     const searchQuery = req.query.query;
-    console.log(searchQuery);
-
     if (!searchQuery || typeof searchQuery !== "string") {
       return res.status(400).send({ error: "Invalid or empty search query." });
     }

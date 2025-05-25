@@ -8,29 +8,35 @@ const { validatePosts } = require("../utils/validation");
 const { findOneAndDelete } = require("../models/user");
 const Connections = require("../models/connections");
 const Comments = require("../models/comments");
+const { upload, cloudinary } = require("../utils/cloudinaryConfig");
 
-postsRouter.post("/posts/create", userAuth, async (req, res) => {
-  try {
-    const user = req.user._id;
-    const { title, description } = req.body;
+postsRouter.post(
+  "/posts/create",
+  userAuth,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const user = req.user._id;
+      const { title, description } = req.body;
 
-    if (!validatePosts(req)) {
-      throw new Error("Content is not valid");
+      if (!validatePosts(req)) {
+        throw new Error("Content is not valid");
+      }
+
+      const post = new Posts({
+        userId: user,
+        title,
+        description,
+        likeCount: 0,
+        commentCount: 0,
+      });
+      await post.save();
+      res.send(post);
+    } catch (error) {
+      res.status(400).send(error.message);
     }
-
-    const post = new Posts({
-      userId: user,
-      title,
-      description,
-      likeCount: 0,
-      commentCount: 0,
-    });
-    await post.save();
-    res.send(post);
-  } catch (error) {
-    res.status(400).send(error.message);
   }
-});
+);
 
 postsRouter.post("/posts/group/create/:groupId", userAuth, async (req, res) => {
   try {
@@ -70,7 +76,7 @@ postsRouter.get("/posts/view", userAuth, async (req, res) => {
 
     const post = await Posts.find({ userId: user }).populate({
       path: "userId",
-      select: "firstName",
+      select: "firstName lastName photo.url",
     });
     res.send(post);
   } catch (error) {
@@ -142,7 +148,7 @@ postsRouter.get("/posts/view/:userId", userAuth, async (req, res) => {
 
     const post = await Posts.find({ userId: userId }).populate({
       path: "userId",
-      select: "firstName",
+      select: "firstName lastName photo.url",
     });
     res.send(post);
   } catch (error) {
@@ -190,7 +196,7 @@ postsRouter.get("/posts/feed", userAuth, async (req, res) => {
       .limit(limit)
       .populate({
         path: "userId",
-        select: "firstName lastName",
+        select: "firstName lastName photo.url",
       });
 
     res.send(posts);
