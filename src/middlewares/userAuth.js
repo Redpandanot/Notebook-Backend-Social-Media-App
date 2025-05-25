@@ -23,7 +23,20 @@ const userAuth = async (req, res, next) => {
       throw new Error("Invalid token please login");
     }
 
-    req.user = user;
+    req.user = {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      emailId: user.emailId,
+      age: user.age,
+      gender: user.gender,
+      college: user.college,
+      photo: user.photo,
+      about: user.about,
+      skills: user.skills,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
     next();
   } catch (error) {
     res.status(400).send(error.message);

@@ -114,10 +114,6 @@ profileRouter.post(
     const localFilePath = req.file.path;
     console.log("here 1 - Local file path:", localFilePath);
     try {
-      const cloudImg = await cloudinary.uploader.upload(localFilePath, {
-        folder: "profileImg",
-      });
-
       console.log("Current image id", user.photo.public_id);
 
       const hasImage = user.photo.public_id !== "default_placeholder";
@@ -131,6 +127,10 @@ profileRouter.post(
           deleteImageFromCloudinary
         );
       }
+
+      const cloudImg = await cloudinary.uploader.upload(localFilePath, {
+        folder: "profileImg",
+      });
 
       const updatedUser = await User.findByIdAndUpdate(
         { _id: user._id },
