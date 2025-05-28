@@ -24,21 +24,30 @@ const postsSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Groups",
     },
-    photoUrl: {
-      type: String,
-      validate(value) {
-        if (!validator.isURL(value)) {
-          throw new Error("Invalid URL");
-        }
+    photos: [
+      {
+        url: {
+          type: String,
+          validate(value) {
+            if (!validator.isURL(value)) {
+              throw new Error("Invalid URL");
+            }
+          },
+        },
+        public_id: {
+          type: String,
+        },
       },
-    },
+    ],
     likeCount: {
       type: Number,
       required: true,
+      default: 0,
     },
     commentCount: {
       type: Number,
       required: true,
+      default: 0,
     },
   },
   {
