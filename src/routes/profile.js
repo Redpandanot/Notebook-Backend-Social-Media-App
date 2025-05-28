@@ -112,7 +112,7 @@ profileRouter.post(
     }
 
     const localFilePath = req.file.path;
-    console.log("here 1 - Local file path:", localFilePath);
+    console.log("Local file path:", localFilePath);
     try {
       console.log("Current image id", user.photo.public_id);
 
