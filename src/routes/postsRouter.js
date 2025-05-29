@@ -203,11 +203,42 @@ postsRouter.get("/posts/feed", userAuth, async (req, res) => {
       .limit(limit)
       .populate({
         path: "userId",
-        select: "firstName lastName photo.url",
-      });
+        select: "firstName lastName photo",
+      })
+      .lean();
 
-    res.send(posts);
+    const optimizedPosts = posts.map((post) => {
+      const newPost = { ...post };
+      if (newPost.photos && newPost.photos.length > 0) {
+        newPost.photos = newPost.photos.map((photo) => {
+          const optimizedUrl = cloudinary.url(photo.public_id, {
+            fetch_format: "auto", // Deliver in optimal format (WebP, AVIF, JPG, etc.)
+            quality: "auto", // Adjust quality automatically
+            secure: true, // Ensure HTTPS
+          });
+
+          return { url: optimizedUrl };
+        });
+      }
+      if (newPost.userId && newPost.userId.photo && newPost.userId.photo.url) {
+        const optimizedProfileImg = cloudinary.url(
+          newPost.userId.photo.public_id,
+          {
+            fetch_format: "auto",
+            quality: "auto",
+            secure: true,
+          }
+        );
+
+        newPost.userId.photo.url = optimizedProfileImg;
+      }
+      return newPost;
+    });
+
+    res.send(optimizedPosts);
   } catch (error) {
+    console.log("Error creating feed", error);
+
     res.send(error.message);
   }
 });
