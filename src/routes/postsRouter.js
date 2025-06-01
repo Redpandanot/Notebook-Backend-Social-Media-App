@@ -8,9 +8,9 @@ const { validatePosts } = require("../utils/validation");
 const { findOneAndDelete } = require("../models/user");
 const Connections = require("../models/connections");
 const Comments = require("../models/comments");
-const { upload, cloudinary } = require("../utils/cloudinaryConfig");
+const { upload } = require("../utils/cloudinaryConfig");
 const fs = require("fs/promises");
-const { createPost } = require("../utils/helperFunctions");
+const { createPost, optimizeImages } = require("../utils/helperFunctions");
 
 postsRouter.post(
   "/post/create",
@@ -47,14 +47,14 @@ postsRouter.post(
 postsRouter.post("/posts/group/create/:groupId", userAuth, async (req, res) => {
   try {
     const user = req.user._id;
-    const { group } = req.params;
+    const { groupId } = req.params;
 
     const { title, description } = req.body;
     if (!validatePosts(req)) {
       throw new Error("Content is not valid");
     }
 
-    const groupExists = await Groups.findById(group);
+    const groupExists = await Groups.findById(groupId);
 
     if (!groupExists) {
       throw new Error("Group does not exist");
@@ -64,7 +64,7 @@ postsRouter.post("/posts/group/create/:groupId", userAuth, async (req, res) => {
       userId: user,
       title,
       description,
-      groupId: group,
+      groupId: groupId,
       likeCount: 0,
       commentCount: 0,
     });
@@ -80,13 +80,17 @@ postsRouter.get("/posts/view", userAuth, async (req, res) => {
   try {
     const user = req.user._id;
 
-    const post = await Posts.find({ userId: user })
+    const posts = await Posts.find({ userId: user })
       .populate({
         path: "userId",
-        select: "firstName lastName photo.url",
+        select: "firstName lastName photo",
       })
-      .sort({ createdAt: -1 });
-    res.send(post);
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const optimizedPosts = optimizeImages(posts);
+
+    res.send(optimizedPosts);
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -154,13 +158,15 @@ postsRouter.get("/posts/view/:userId", userAuth, async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const post = await Posts.find({ userId: userId })
+    const posts = await Posts.find({ userId: userId })
       .populate({
         path: "userId",
-        select: "firstName lastName photo.url",
+        select: "firstName lastName photo",
       })
-      .sort({ createdAt: -1 });
-    res.send(post);
+      .sort({ createdAt: -1 })
+      .lean();
+    const optimizedPosts = optimizeImages(posts);
+    res.send(optimizedPosts);
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -207,33 +213,7 @@ postsRouter.get("/posts/feed", userAuth, async (req, res) => {
       })
       .lean();
 
-    const optimizedPosts = posts.map((post) => {
-      const newPost = { ...post };
-      if (newPost.photos && newPost.photos.length > 0) {
-        newPost.photos = newPost.photos.map((photo) => {
-          const optimizedUrl = cloudinary.url(photo.public_id, {
-            fetch_format: "auto", // Deliver in optimal format (WebP, AVIF, JPG, etc.)
-            quality: "auto", // Adjust quality automatically
-            secure: true, // Ensure HTTPS
-          });
-
-          return { url: optimizedUrl };
-        });
-      }
-      if (newPost.userId && newPost.userId.photo && newPost.userId.photo.url) {
-        const optimizedProfileImg = cloudinary.url(
-          newPost.userId.photo.public_id,
-          {
-            fetch_format: "auto",
-            quality: "auto",
-            secure: true,
-          }
-        );
-
-        newPost.userId.photo.url = optimizedProfileImg;
-      }
-      return newPost;
-    });
+    const optimizedPosts = optimizeImages(posts);
 
     res.send(optimizedPosts);
   } catch (error) {
@@ -258,8 +238,8 @@ postsRouter.post("/posts/comment/:postId", userAuth, async (req, res) => {
       parentCommentId: parentId,
     });
     addTODb.save();
-    //upadte comment count
-    const updateCommentCount = await Posts.findByIdAndUpdate(postId, {
+    //update comment count
+    await Posts.findByIdAndUpdate(postId, {
       $inc: { commentCount: 1 },
     });
     res.send(addTODb);

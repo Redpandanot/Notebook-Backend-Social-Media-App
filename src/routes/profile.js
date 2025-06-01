@@ -5,7 +5,6 @@ const validator = require("validator");
 const profileRouter = express.Router();
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
-const Connections = require("../models/connections");
 const multer = require("multer");
 const { upload, cloudinary } = require("../utils/cloudinaryConfig");
 const fs = require("fs/promises");
@@ -13,6 +12,17 @@ const fs = require("fs/promises");
 profileRouter.get("/profile/view", userAuth, (req, res) => {
   try {
     const user = req.user;
+
+    const optimizedProfileImg = cloudinary.url(user.photo.public_id, {
+      fetch_format: "auto",
+      quality: "auto",
+      secure: true,
+      width: 400,
+      crop: "limit",
+    });
+
+    user.photo = { url: optimizedProfileImg };
+
     res.send(user);
   } catch (error) {
     res.status(400).send("cannot fetch user, please login");
@@ -93,6 +103,17 @@ profileRouter.get("/profile/view/:profileId", userAuth, async (req, res) => {
       if (!profileDetail) {
         res.send("User does not exist");
       } else {
+        const optimizedProfileImg = cloudinary.url(
+          profileDetail.photo.public_id,
+          {
+            fetch_format: "auto",
+            quality: "auto",
+            secure: true,
+            width: 400,
+            crop: "limit",
+          }
+        );
+        profileDetail.photo = { url: optimizedProfileImg };
         res.send(profileDetail);
       }
     }
