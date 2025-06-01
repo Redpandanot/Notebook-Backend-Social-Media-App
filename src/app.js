@@ -21,6 +21,7 @@ const connectionRouter = require("./routes/connectionRouter");
 const postsRouter = require("./routes/postsRouter");
 const groupRouter = require("./routes/groupRouter");
 const searchRouter = require("./routes/searchRouter");
+const discussionRouter = require("./routes/discussionRouter");
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
@@ -28,6 +29,7 @@ app.use("/", connectionRouter);
 app.use("/", postsRouter);
 app.use("/", groupRouter);
 app.use("/", searchRouter);
+app.use("/", discussionRouter);
 
 connectDB()
   .then(() => {

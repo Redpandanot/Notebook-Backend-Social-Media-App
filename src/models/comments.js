@@ -29,6 +29,7 @@ const commentSchema = new mongoose.Schema(
     parentCommentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Comments",
+      default: null,
     },
   },
   {
