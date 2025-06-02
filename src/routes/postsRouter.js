@@ -247,4 +247,21 @@ postsRouter.post("/posts/comment/:postId", userAuth, async (req, res) => {
     res.send(error.message);
   }
 });
+
+postsRouter.get("/post/view/:postId", userAuth, async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const getPost = await Posts.findById({ _id: postId })
+      .populate({
+        path: "userId",
+        select: "firstName lastName photo",
+      })
+      .lean();
+    res.send(getPost);
+  } catch (error) {
+    console.log("error fetching posts", error.message);
+    res.send(error.message);
+  }
+});
+
 module.exports = postsRouter;
