@@ -1,6 +1,7 @@
 const { cloudinary } = require("../utils/cloudinaryConfig");
 const fs = require("fs/promises");
 const Posts = require("../models/posts");
+const Comments = require("../models/comments");
 
 const createPost = async (userId, req, title, description) => {
   let uploadedImagesData = [];
@@ -54,7 +55,7 @@ const createPost = async (userId, req, title, description) => {
   } catch (error) {
     console.error("Error creating post:", error.message);
 
-    // 1. Delete images from Cloudinary if they were successfully uploaded
+    // Delete images from Cloudinary if they were successfully uploaded
     if (uploadedImagesData.length > 0) {
       const publicIdsToDestroy = uploadedImagesData.map((img) => img.public_id);
 
@@ -103,6 +104,63 @@ const createPost = async (userId, req, title, description) => {
   }
 };
 
+const optimizeImages = (posts) => {
+  const optimizedPosts = posts.map((post) => {
+    const newPost = { ...post };
+    if (newPost.photos && newPost.photos.length > 0) {
+      newPost.photos = newPost.photos.map((photo) => {
+        const optimizedUrl = cloudinary.url(photo.public_id, {
+          fetch_format: "auto", // Deliver in optimal format (WebP, AVIF, JPG, etc.)
+          quality: "auto", // Adjust quality automatically
+          secure: true, // Ensure HTTPS
+          width: 400,
+          crop: "limit",
+        });
+        return { url: optimizedUrl };
+      });
+    }
+    if (newPost.userId && newPost.userId.photo && newPost.userId.photo.url) {
+      const optimizedProfileImg = cloudinary.url(
+        newPost.userId.photo.public_id,
+        {
+          fetch_format: "auto",
+          quality: "auto",
+          secure: true,
+          width: 50,
+          crop: "limit",
+        }
+      );
+
+      newPost.userId.photo.url = optimizedProfileImg;
+    }
+    return newPost;
+  });
+  return optimizedPosts;
+};
+
+const populateReplies = async (postId, parentCommentId) => {
+  const replies = await Comments.find({
+    postId: postId,
+    parentCommentId: parentCommentId,
+  })
+    .populate({
+      path: "userId",
+      select: "firstName lastName photo",
+    })
+    .lean()
+    .sort({ createdAt: 1 });
+
+  const nestedReplies = await Promise.all(
+    replies.map(async (parentComment) => {
+      parentComment.replies = await populateReplies(postId, parentComment._id);
+      return parentComment;
+    })
+  );
+  return nestedReplies;
+};
+
 module.exports = {
   createPost,
+  optimizeImages,
+  populateReplies,
 };
