@@ -229,6 +229,14 @@ postsRouter.post("/posts/comment/:postId", userAuth, async (req, res) => {
     const { postId } = req.params;
     const comment = req.body.comment;
     const parentId = req.body.parentId;
+
+    const getPost = await Posts.findById({ _id: postId });
+
+    if (!getPost) {
+      res.send("Post does not exist");
+      return;
+    }
+
     const addTODb = new Comments({
       postId,
       userId: user,
