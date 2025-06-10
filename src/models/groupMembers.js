@@ -20,10 +20,6 @@ const groupMemberSchema = mongoose.Schema(
         message: "incorrect status value",
       },
     },
-    memberCount: {
-      type: Number,
-      required: true,
-    },
   },
   {
     timestamps: true,

@@ -24,6 +24,11 @@ const groupSchema = mongoose.Schema(
       ref: "User",
       required: true,
     },
+    memberCount: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     isPrivate: {
       type: Boolean,
       default: false,

@@ -34,7 +34,7 @@ profileRouter.post("/profile/edit", userAuth, async (req, res) => {
     if (!validationProfileEdit(req)) {
       throw new Error("Invalid edit request");
     }
-
+    //can a user edit someoneelses profile?
     const currentUser = req.user;
     Object.keys(req.body).forEach((field) => {
       currentUser[field] = req.body[field];
