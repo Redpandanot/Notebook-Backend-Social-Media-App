@@ -15,19 +15,20 @@ const groupSchema = mongoose.Schema(
     },
     groupInfo: {
       type: String,
-      requied: true,
+      required: true,
       minLength: 3,
       maxLength: 200,
     },
-    moderators: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "User",
-      required: true,
-    },
+    moderators: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     memberCount: {
       type: Number,
       required: true,
-      default: 0,
+      default: 1,
     },
     isPrivate: {
       type: Boolean,
