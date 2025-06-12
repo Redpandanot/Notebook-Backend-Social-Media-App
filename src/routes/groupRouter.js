@@ -51,18 +51,18 @@ groupRouter.post("/group/joinRequest/:groupId", userAuth, async (req, res) => {
     });
 
     //is already a member?
-    const isAMember = await GroupMember.findById({
+    const isAMember = await GroupMember.findOne({
       groupId,
       userId: user._id,
     });
 
     if (isAMember) {
       if (isAMember.status === "requested") {
-        res.send("Request already exists");
+        return res.send("Request already exists");
       } else if (isAMember.status === "accepted") {
-        res.send("Already a member");
+        return res.send("Already a member");
       } else if (isAMember.status === "rejected") {
-        res.send("Your request as been rejected");
+        return res.send("Your request as been rejected");
       }
     }
 
