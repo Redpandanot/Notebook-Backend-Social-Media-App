@@ -191,10 +191,49 @@ groupRouter.post(
   }
 );
 
-groupRouter.post("/group/removeModerator", userAuth, async (req, res) => {
-  //if admin
-  //does moderator exist
-  //remove moderator
-});
+groupRouter.post(
+  "/group/removeModerator/:groupId/:moderatorId",
+  userAuth,
+  async (req, res) => {
+    //if admin
+    try {
+      const user = req.user;
+      const { groupId, moderatorId } = req.params;
+      const group = await Groups.findById({
+        _id: groupId,
+      });
+
+      if (!group.createdBy.equals(user._id)) {
+        console.log(
+          "user is not an admin had has does not access to remove moderator"
+        );
+        throw new Error("do not have authorization to make this change");
+      }
+      console.log("user is admin had has access to remove moderator");
+
+      //does moderator exist
+      const isAModerator = group.moderators.find((id) => {
+        return id.equals(moderatorId);
+      });
+
+      if (!isAModerator) {
+        console.log("user is a moderator");
+        throw new Error("user is not a moderator");
+      }
+      console.log("user is a moderator an will be removed");
+      //remove moderator
+      group.moderators = group.moderators.filter((id) => {
+        return !id.equals(moderatorId);
+      });
+
+      await group.save();
+      console.log("moderator removed");
+      res.send("Moderator removed", group);
+    } catch (error) {
+      console.log("something went wrong", error);
+      res.send("request failed : " + error.message);
+    }
+  }
+);
 
 module.exports = groupRouter;
