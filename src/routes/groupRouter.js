@@ -236,4 +236,68 @@ groupRouter.post(
   }
 );
 
+groupRouter.post(
+  "/group/removeMember/:groupId/:memberId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const user = req.user;
+      const { groupId, memberId } = req.params;
+
+      const group = await Groups.findById({
+        _id: groupId,
+      });
+
+      const isUserAuthorized = group.moderators.find((id) => {
+        return id.equals(user._id);
+      });
+
+      if (!isUserAuthorized) {
+        console.log("User is not authorized to make this change");
+        throw new Error("User is not authorized to make this change");
+      }
+
+      const isAMember = await GroupMember.findOne({
+        groupId,
+        userId: memberId,
+        status: "accepted",
+      });
+
+      if (!isAMember) {
+        console.log("User it not a member of this group");
+        throw new Error("User it not a member of this group");
+      }
+
+      const removeUserFromGroup = await GroupMember.findByIdAndDelete({
+        _id: isAMember._id,
+      });
+
+      const isMemberAModerator = group.moderators.find((id) => {
+        return id.equals(memberId);
+      });
+
+      if (isMemberAModerator) {
+        group.moderators = group.moderators.filter((id) => {
+          return !id.equals(memberId);
+        });
+      }
+
+      if (!removeUserFromGroup) {
+        throw new Error("someting went wrong while removing the user");
+      }
+
+      console.log("user removed");
+
+      group.memberCount--;
+      await group.save();
+      console.log("Group member count updated successfully:", group);
+
+      res.send("user removed");
+    } catch (error) {
+      console.log("failed to remove user from group ", error.message);
+      res.send("failed to remove user from group : " + error.message);
+    }
+  }
+);
+
 module.exports = groupRouter;
