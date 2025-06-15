@@ -233,7 +233,9 @@ connectionRouter.get("/new-friends", userAuth, async (req, res) => {
           toUserId: user,
         },
       ],
-    }).select("fromUserId toUserId");
+    })
+      .select("fromUserId toUserId")
+      .lean();
 
     const hideExisitingRequests = new Set();
     existingConnections.forEach((connection) => {
@@ -251,11 +253,47 @@ connectionRouter.get("/new-friends", userAuth, async (req, res) => {
     })
       .select("firstName lastName emailId")
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     res.send(users);
   } catch (error) {
     res.send(error.message);
+  }
+});
+
+connectionRouter.post("/unFriend/:friendId", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    const { friendId } = req.params;
+    const doesConnectionExist = await Connections.findOne({
+      $or: [
+        {
+          fromUserId: user._id,
+          toUserId: friendId,
+        },
+        {
+          fromUserId: friendId,
+          toUserId: user._id,
+        },
+      ],
+    }).lean();
+
+    if (!doesConnectionExist || doesConnectionExist.status !== "accepted") {
+      console.log("Not a friend , connection : ", doesConnectionExist);
+
+      throw new Error("Not a friend");
+    }
+
+    const removeFriend = await Connections.findByIdAndDelete({
+      _id: doesConnectionExist._id,
+    });
+
+    console.log("Connection removed");
+    res.send("Connection removed" + removeFriend);
+  } catch (error) {
+    console.log("Connection could not be removed");
+    res.send("Connection could not be removed " + error.message);
   }
 });
 
