@@ -79,5 +79,7 @@ POST /posts/posts/like/:postId – Like a post
 POST /posts/posts/comment/:postId – Comment on a post
 
 </details>
+
+
 📝 Note : 
 Feel free to fork this project and open issues or pull requests with suggestions or improvements. I welcome contributions!
