@@ -1,4 +1,5 @@
-📡 API Documentation
+API Documentation 📡 
+
 Welcome to the API documentation for our platform. Below is a list of all available endpoints, grouped by router.
 
 
