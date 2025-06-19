@@ -159,8 +159,20 @@ const populateReplies = async (postId, parentCommentId) => {
   return nestedReplies;
 };
 
+const optimizedImg = (publicId, width) => {
+  const optimizedUrl = cloudinary.url(publicId, {
+    fetch_format: "auto",
+    quality: "auto",
+    secure: true,
+    width: width,
+    crop: "limit",
+  });
+  return optimizedUrl;
+};
+
 module.exports = {
   createPost,
   optimizeImages,
   populateReplies,
+  optimizedImg,
 };
