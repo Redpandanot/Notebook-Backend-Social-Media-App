@@ -4,6 +4,8 @@ const connectionRouter = express.Router();
 const Connections = require("../models/connections");
 const User = require("../models/user");
 const Followers = require("../models/followers");
+const { cloudinary } = require("../utils/cloudinaryConfig");
+const { optimizedImg } = require("../utils/helperFunctions");
 
 connectionRouter.post(
   "/friend-request/send/:status/:userId",
@@ -164,11 +166,35 @@ connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
         { status: { $ne: "accepted" } },
         { status: { $ne: "rejected" } },
       ],
-    }).populate({
-      path: "fromUserId",
-      select: "firstName lastName",
+    })
+      .populate({
+        path: "fromUserId",
+        select: "firstName lastName photo",
+      })
+      .lean();
+
+    const urlUpdatedConnectionRequest = connectionRequest.map((request) => {
+      if (!request.fromUserId.photo) {
+        return request;
+      }
+      const optimizedProfileImg = optimizedImg(
+        request.fromUserId.photo.public_id,
+        400
+      );
+
+      return {
+        ...request,
+        fromUserId: {
+          ...request.fromUserId,
+          photo: {
+            ...request.fromUserId.photo,
+            url: optimizedProfileImg,
+          },
+        },
+      };
     });
-    res.send(connectionRequest);
+
+    res.send(urlUpdatedConnectionRequest);
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -191,12 +217,13 @@ connectionRouter.get("/friends-list", userAuth, async (req, res) => {
     })
       .populate({
         path: "fromUserId",
-        select: "firstName lastName",
+        select: "firstName lastName photo",
       })
       .populate({
         path: "toUserId",
-        select: "firstName lastName",
-      });
+        select: "firstName lastName photo",
+      })
+      .lean();
     const organisedFriendsList = friends.map((connection) => {
       const friend = connection.fromUserId._id.equals(user)
         ? connection.toUserId
@@ -205,9 +232,22 @@ connectionRouter.get("/friends-list", userAuth, async (req, res) => {
         _id: friend._id,
         firstName: friend.firstName,
         lastName: friend.lastName,
+        photo: friend.photo,
       };
     });
-    res.send(organisedFriendsList);
+
+    const imgOptimizedFriendsList = organisedFriendsList.map((item) => {
+      const optimizedProfileImg = optimizedImg(item.photo.public_id, 400);
+      return {
+        ...item,
+        photo: {
+          ...item.photo,
+          url: optimizedProfileImg,
+        },
+      };
+    });
+
+    res.send(imgOptimizedFriendsList);
   } catch (error) {
     res.json({
       status: 400,
@@ -251,12 +291,19 @@ connectionRouter.get("/new-friends", userAuth, async (req, res) => {
         { _id: { $ne: user } },
       ],
     })
-      .select("firstName lastName emailId")
+      .select("firstName lastName emailId photo")
       .skip(skip)
       .limit(limit)
       .lean();
 
-    res.send(users);
+    const urlUpdatedConnectionRequest = users.map((request) => {
+      const optimizedProfileImg = optimizedImg(request.photo.public_id, 400);
+      return {
+        ...request.photo,
+        url: optimizedProfileImg,
+      };
+    });
+    res.send(urlUpdatedConnectionRequest);
   } catch (error) {
     res.send(error.message);
   }
