@@ -57,11 +57,11 @@ From the project plan in **app.md**:
 - **Media Uploads**
   - Image uploads via Multer + Cloudinary
 
-_(…and more – see full API list below.)_ :contentReference[oaicite:0]{index=0}
+_(…and more – see full API list below.)
 
 ## Tech Stack
 
-- **Runtime & Framework**: Node.js, Express.js :contentReference[oaicite:1]{index=1}
+- **Runtime & Framework**: Node.js, Express.js
 - **Database**: MongoDB (via Mongoose)
 - **Authentication**: JWT (jsonwebtoken), bcrypt
 - **File Uploads**: Multer + Cloudinary
@@ -106,7 +106,6 @@ Development (with hot‑reload):
 
 ```bash
 npm run dev
-Production:
 ```
 
 ```bash
