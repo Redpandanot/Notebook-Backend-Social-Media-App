@@ -56,6 +56,8 @@ profileRouter.post("/profile/edit/password", userAuth, async (req, res) => {
       throw new Error("Password is not strong");
     }
 
+    console.log("input validated");
+
     const verifyCurrentPassword = await bcrypt.compare(
       currentPassword,
       req.user.password
@@ -64,6 +66,8 @@ profileRouter.post("/profile/edit/password", userAuth, async (req, res) => {
     if (!verifyCurrentPassword) {
       res.send("Incorrect Password");
     }
+
+    console.log("current password validated");
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 

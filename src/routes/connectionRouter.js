@@ -174,12 +174,16 @@ connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
       .lean();
 
     const urlUpdatedConnectionRequest = connectionRequest.map((request) => {
-      if (!request.fromUserId.photo) {
+      if (
+        !request.fromUserId ||
+        !request.fromUserId.photo ||
+        !request.fromUserId.photo.public_id
+      ) {
         return request;
       }
       const optimizedProfileImg = optimizedImg(
         request.fromUserId.photo.public_id,
-        400
+        50
       );
 
       return {
@@ -237,7 +241,8 @@ connectionRouter.get("/friends-list", userAuth, async (req, res) => {
     });
 
     const imgOptimizedFriendsList = organisedFriendsList.map((item) => {
-      const optimizedProfileImg = optimizedImg(item.photo.public_id, 400);
+      if (!item.photo || !item.photo.public_id) return item;
+      const optimizedProfileImg = optimizedImg(item.photo.public_id, 50);
       return {
         ...item,
         photo: {
@@ -297,10 +302,14 @@ connectionRouter.get("/new-friends", userAuth, async (req, res) => {
       .lean();
 
     const urlUpdatedConnectionRequest = users.map((request) => {
-      const optimizedProfileImg = optimizedImg(request.photo.public_id, 400);
+      if (!request.photo || !request.photo.public_id) return request;
+      const optimizedProfileImg = optimizedImg(request.photo.public_id, 50);
       return {
-        ...request.photo,
-        url: optimizedProfileImg,
+        ...request,
+        photo: {
+          ...request.photo,
+          url: optimizedProfileImg,
+        },
       };
     });
     res.send(urlUpdatedConnectionRequest);

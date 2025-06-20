@@ -2,6 +2,8 @@ const express = require("express");
 const searchRouter = express.Router();
 const userAuth = require("../middlewares/userAuth");
 const User = require("../models/user");
+const Posts = require("../models/posts");
+const Comments = require("../models/comments");
 const { userSafeData } = require("../utils/constants");
 
 searchRouter.get("/search", userAuth, async (req, res) => {
@@ -27,7 +29,20 @@ searchRouter.get("/search", userAuth, async (req, res) => {
         },
       ],
     }).select(userSafeData);
-    res.send(userList);
+
+    const postList = await Posts.find({
+      $or: [{ title: searchRegex }, { description: searchRegex }],
+    });
+
+    const commentList = await Comments.find({
+      comment: searchRegex,
+    });
+
+    res.json({
+      userList,
+      postList,
+      commentList,
+    });
   } catch (error) {}
 });
 
