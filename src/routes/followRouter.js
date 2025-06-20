@@ -126,6 +126,8 @@ followRouter.get("/followers/:userId", userAuth, async (req, res) => {
       })
       .lean();
 
+    console.log("begin optmizing images");
+
     const imgOptimizedFriendsList = followers.map((item) => {
       if (
         !item.follower ||
@@ -136,14 +138,10 @@ followRouter.get("/followers/:userId", userAuth, async (req, res) => {
         return item;
       }
 
-      console.log("begin optmizing images");
-
       const optimizedProfileImg = optimizedImg(
         item.follower.photo.public_id,
         50
       );
-
-      console.log("Image optimized!");
 
       return {
         ...item,
@@ -156,7 +154,7 @@ followRouter.get("/followers/:userId", userAuth, async (req, res) => {
         },
       };
     });
-
+    console.log("Image optimized!");
     res.send(imgOptimizedFriendsList);
   } catch (error) {
     console.log("something went wrong : ", error.message);
