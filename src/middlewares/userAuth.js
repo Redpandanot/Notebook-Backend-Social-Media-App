@@ -34,6 +34,7 @@ const userAuth = async (req, res, next) => {
       photo: user.photo,
       about: user.about,
       skills: user.skills,
+      password: user.password,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
