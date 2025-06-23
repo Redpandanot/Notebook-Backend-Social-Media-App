@@ -30,6 +30,34 @@ searchRouter.get("/search", userAuth, async (req, res) => {
       ],
     }).select(userSafeData);
 
+    res.send(userList);
+  } catch (error) {}
+});
+
+searchRouter.get("/search/list", userAuth, async (req, res) => {
+  try {
+    const user = req.user._id;
+    const searchQuery = req.query.query;
+    if (!searchQuery || typeof searchQuery !== "string") {
+      return res.status(400).send({ error: "Invalid or empty search query." });
+    }
+    const searchRegex = new RegExp(escapeRegex(searchQuery), "i");
+    const userList = await User.find({
+      $and: [
+        {
+          $or: [
+            { firstName: searchRegex },
+            { lastName: searchRegex },
+            { college: searchRegex },
+            { skills: searchRegex },
+          ],
+        },
+        {
+          _id: { $ne: user },
+        },
+      ],
+    }).select(userSafeData);
+
     const postList = await Posts.find({
       $or: [{ title: searchRegex }, { description: searchRegex }],
     });
