@@ -56,15 +56,27 @@ searchRouter.get("/search/list", userAuth, async (req, res) => {
           _id: { $ne: user },
         },
       ],
-    }).select(userSafeData);
+    })
+      .select(userSafeData)
+      .lean();
 
     const postList = await Posts.find({
       $or: [{ title: searchRegex }, { description: searchRegex }],
-    });
+    })
+      .populate({
+        path: "userId",
+        select: "firstName lastName photo",
+      })
+      .lean();
 
     const commentList = await Comments.find({
       comment: searchRegex,
-    });
+    })
+      .populate({
+        path: "userId",
+        select: "firstName lastName photo",
+      })
+      .lean();
 
     res.json({
       userList,
