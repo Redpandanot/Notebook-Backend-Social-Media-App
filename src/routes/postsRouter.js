@@ -76,9 +76,14 @@ postsRouter.post("/posts/group/create/:groupId", userAuth, async (req, res) => {
   }
 });
 
+//this api is probably not being used
 postsRouter.get("/posts/view", userAuth, async (req, res) => {
   try {
     const user = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
 
     const posts = await Posts.find({ userId: user })
       .populate({
@@ -86,6 +91,8 @@ postsRouter.get("/posts/view", userAuth, async (req, res) => {
         select: "firstName lastName photo",
       })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
 
     const optimizedPosts = optimizeImages(posts);
@@ -157,6 +164,10 @@ postsRouter.post("/posts/like/:postId", userAuth, async (req, res) => {
 postsRouter.get("/posts/view/:userId", userAuth, async (req, res) => {
   try {
     const { userId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
 
     const posts = await Posts.find({ userId: userId })
       .populate({
@@ -164,6 +175,8 @@ postsRouter.get("/posts/view/:userId", userAuth, async (req, res) => {
         select: "firstName lastName photo",
       })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
     const optimizedPosts = optimizeImages(posts);
     res.send(optimizedPosts);

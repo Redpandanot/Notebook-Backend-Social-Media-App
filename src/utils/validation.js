@@ -37,7 +37,7 @@ const validatePosts = (req) => {
     typeof title === "string" &&
     validator.isLength(title, { min: 3, max: 75 }) &&
     typeof description === "string" &&
-    validator.isLength(title, { min: 3, max: 1500 })
+    validator.isLength(description, { min: 3, max: 1500 })
   ) {
     return true;
   }

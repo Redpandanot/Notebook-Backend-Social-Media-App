@@ -157,6 +157,10 @@ connectionRouter.post("/unfollow/:userId", userAuth, async (req, res) => {
 connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
 
     const connectionRequest = await Connections.find({
       $and: [
@@ -171,6 +175,8 @@ connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
         path: "fromUserId",
         select: "firstName lastName photo",
       })
+      .skip(skip)
+      .limit(limit)
       .lean();
 
     const urlUpdatedConnectionRequest = connectionRequest.map((request) => {
@@ -207,6 +213,11 @@ connectionRouter.get("/friend-requests/view", userAuth, async (req, res) => {
 connectionRouter.get("/friends-list", userAuth, async (req, res) => {
   try {
     const user = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
+
     const friends = await Connections.find({
       $or: [
         {
@@ -227,7 +238,10 @@ connectionRouter.get("/friends-list", userAuth, async (req, res) => {
         path: "toUserId",
         select: "firstName lastName photo",
       })
+      .skip(skip)
+      .limit(limit)
       .lean();
+
     const organisedFriendsList = friends.map((connection) => {
       const friend = connection.fromUserId._id.equals(user)
         ? connection.toUserId
