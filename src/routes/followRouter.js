@@ -6,6 +6,11 @@ const { optimizedImg } = require("../utils/helperFunctions");
 
 followRouter.get("/followers", userAuth, async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
+
     const user = req.user;
     const followers = await Followers.find({
       followee: user._id,
@@ -18,6 +23,8 @@ followRouter.get("/followers", userAuth, async (req, res) => {
         path: "follower",
         select: "firstName lastName photo",
       })
+      .skip(skip)
+      .limit(limit)
       .lean();
     const imgOptimizedFriendsList = followers.map((item) => {
       if (
@@ -29,14 +36,10 @@ followRouter.get("/followers", userAuth, async (req, res) => {
         return item;
       }
 
-      console.log("begin optmizing images");
-
       const optimizedProfileImg = optimizedImg(
         item.follower.photo.public_id,
         50
       );
-
-      console.log("Image optimized!");
 
       return {
         ...item,
@@ -60,6 +63,11 @@ followRouter.get("/followers", userAuth, async (req, res) => {
 followRouter.get("/following", userAuth, async (req, res) => {
   try {
     const user = req.user;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
+
     const following = await Followers.find({
       follower: user._id,
     })
@@ -71,6 +79,8 @@ followRouter.get("/following", userAuth, async (req, res) => {
         path: "follower",
         select: "firstName lastName",
       })
+      .skip(skip)
+      .limit(limit)
       .lean();
     const imgOptimizedFriendsList = following.map((item) => {
       if (
@@ -82,14 +92,10 @@ followRouter.get("/following", userAuth, async (req, res) => {
         return item;
       }
 
-      console.log("begin optmizing images");
-
       const optimizedProfileImg = optimizedImg(
         item.followee.photo.public_id,
         50
       );
-
-      console.log("Image optimized!");
 
       return {
         ...item,
@@ -113,6 +119,11 @@ followRouter.get("/following", userAuth, async (req, res) => {
 followRouter.get("/followers/:userId", userAuth, async (req, res) => {
   try {
     const { userId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
+
     const followers = await Followers.find({
       followee: userId,
     })
@@ -124,9 +135,9 @@ followRouter.get("/followers/:userId", userAuth, async (req, res) => {
         path: "follower",
         select: "firstName lastName photo",
       })
+      .skip(skip)
+      .limit(limit)
       .lean();
-
-    console.log("begin optmizing images");
 
     const imgOptimizedFriendsList = followers.map((item) => {
       if (
@@ -154,7 +165,6 @@ followRouter.get("/followers/:userId", userAuth, async (req, res) => {
         },
       };
     });
-    console.log("Image optimized!");
     res.send(imgOptimizedFriendsList);
   } catch (error) {
     console.log("something went wrong : ", error.message);
@@ -165,6 +175,11 @@ followRouter.get("/followers/:userId", userAuth, async (req, res) => {
 followRouter.get("/following/:userId", userAuth, async (req, res) => {
   try {
     const { userId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
+
     const following = await Followers.find({
       follower: userId,
     })
@@ -176,6 +191,8 @@ followRouter.get("/following/:userId", userAuth, async (req, res) => {
         path: "follower",
         select: "firstName lastName",
       })
+      .skip(skip)
+      .limit(limit)
       .lean();
     const imgOptimizedFriendsList = following.map((item) => {
       if (
@@ -187,14 +204,10 @@ followRouter.get("/following/:userId", userAuth, async (req, res) => {
         return item;
       }
 
-      console.log("begin optmizing images");
-
       const optimizedProfileImg = optimizedImg(
         item.followee.photo.public_id,
         50
       );
-
-      console.log("Image optimized!");
 
       return {
         ...item,
