@@ -7,7 +7,7 @@ const userAuth = async (req, res, next) => {
     if (!token) {
       throw new Error("Invalid token");
     }
-    const decodedObj = jwt.verify(token, process.env.JWT_SECRECT);
+    const decodedObj = jwt.verify(token, process.env.JWT_SECRET);
 
     const { _id, iat } = decodedObj;
     const user = await User.findById({ _id });
@@ -40,7 +40,8 @@ const userAuth = async (req, res, next) => {
     };
     next();
   } catch (error) {
-    res.status(400).send(error.message);
+    console.error("Socket auth error:", err.message);
+    next(new Error("Authentication error"));
   }
 };
 

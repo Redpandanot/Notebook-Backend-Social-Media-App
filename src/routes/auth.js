@@ -25,7 +25,7 @@ authRouter.post("/signup", async (req, res) => {
     await user.save();
     console.log("user adding done");
     //create jwt
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRECT, {
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
@@ -60,7 +60,7 @@ authRouter.post("/login", async (req, res) => {
       throw new Error("Invalid Credentials");
     }
 
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRECT, {
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
