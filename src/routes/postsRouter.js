@@ -243,7 +243,7 @@ postsRouter.post("/posts/comment/:postId", userAuth, async (req, res) => {
     const comment = req.body.comment;
     const parentId = req.body.parentId;
 
-    const getPost = await Posts.findById({ _id: postId });
+    const getPost = await Posts.findOne({ _id: postId });
 
     if (!getPost) {
       res.send("Post does not exist");
@@ -258,7 +258,7 @@ postsRouter.post("/posts/comment/:postId", userAuth, async (req, res) => {
       replyCount: 0,
       parentCommentId: parentId,
     });
-    addTODb.save();
+    await addTODb.save();
     //update comment count
     await Posts.findByIdAndUpdate(postId, {
       $inc: { commentCount: 1 },
