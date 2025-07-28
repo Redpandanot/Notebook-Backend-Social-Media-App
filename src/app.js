@@ -25,6 +25,7 @@ const groupRouter = require("./routes/groupRouter");
 const searchRouter = require("./routes/searchRouter");
 const discussionRouter = require("./routes/discussionRouter");
 const followerRouter = require("./routes/followRouter");
+const chatRouter = require("./routes/chatRouter");
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
@@ -34,6 +35,7 @@ app.use("/", groupRouter);
 app.use("/", searchRouter);
 app.use("/", discussionRouter);
 app.use("/", followerRouter);
+app.use("/", chatRouter);
 
 const server = http.createServer(app);
 initializeSocket(server);
