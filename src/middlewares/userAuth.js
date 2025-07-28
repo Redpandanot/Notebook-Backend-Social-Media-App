@@ -10,7 +10,7 @@ const userAuth = async (req, res, next) => {
     const decodedObj = jwt.verify(token, process.env.JWT_SECRET);
 
     const { _id, iat } = decodedObj;
-    const user = await User.findById({ _id });
+    const user = await User.findById(_id);
     if (!user) {
       res.send("Please sign up");
     }
@@ -40,7 +40,6 @@ const userAuth = async (req, res, next) => {
     };
     next();
   } catch (error) {
-    console.error("Socket auth error:", err.message);
     next(new Error("Authentication error"));
   }
 };

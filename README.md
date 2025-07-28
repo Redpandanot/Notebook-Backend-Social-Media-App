@@ -57,7 +57,7 @@ From the project plan in **app.md**:
 - **Media Uploads**
   - Image uploads via Multer + Cloudinary
 
-_(…and more – see full API list below.)
+and more – see full API list in apiList.md file.
 
 ## Tech Stack
 

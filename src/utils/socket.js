@@ -2,6 +2,8 @@ const socket = require("socket.io");
 const cookie = require("cookie");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+const Chat = require("../models/chat");
+const Message = require("../models/message");
 
 const initializeSocket = (server) => {
   const io = socket(server, {
@@ -26,7 +28,7 @@ const initializeSocket = (server) => {
       const decodedObj = jwt.verify(token, process.env.JWT_SECRET);
 
       const { _id, iat } = decodedObj;
-      const user = await User.findById({ _id });
+      const user = await User.findById(_id);
       if (!user) {
         next(new Error("User not found"));
       }
@@ -60,20 +62,72 @@ const initializeSocket = (server) => {
 
   io.on("connection", (socket) => {
     const fromUserId = socket.user?._id;
-    socket.on("joinChat", ({ toUserId }) => {
-      if (!toUserId) return;
+    socket.on("joinChat", async ({ toUserId }) => {
+      if (!toUserId) {
+        socket.emit("error", { message: "Missing recipient user ID." });
+        return;
+      }
 
-      const roomId = [fromUserId, toUserId].sort().join("$");
-      console.log(fromUserId + " joined the room : " + roomId);
-      socket.join(roomId);
+      try {
+        const user = await User.findById(toUserId);
+        if (!user) {
+          socket.emit("error", { message: "Recipient user not found." });
+          return;
+        }
+
+        const roomId = [fromUserId, toUserId].sort().join("$");
+        console.log(fromUserId + " joined the room : " + roomId);
+        socket.join(roomId);
+      } catch (error) {
+        console.error("Error in joinChat:", error);
+        socket.emit("error", { message: "Internal server error." });
+      }
     });
 
-    socket.on("sendMessage", ({ toUserId, text }) => {
+    socket.on("sendMessage", async ({ toUserId, text }) => {
       if (!toUserId || !text || text.trim().length === 0) return;
+      console.log(toUserId + " , " + text);
+      try {
+        console.log("message sent by ", fromUserId);
+        const roomId = [fromUserId, toUserId].sort().join("$");
 
-      console.log("message sent by user", text);
-      const roomId = [fromUserId, toUserId].sort().join("$");
-      io.to(roomId).emit("messageReceived", { fromUserId, text });
+        let chat = await Chat.findOne({
+          participants: { $all: [fromUserId, toUserId] },
+        });
+
+        if (!chat) {
+          chat = new Chat({
+            participants: [fromUserId, toUserId].sort(),
+            lastMessage: {
+              text,
+              timestamp: new Date(),
+              sender: fromUserId,
+            },
+          });
+          await chat.save();
+        } else {
+          chat.lastMessage = {
+            text,
+            timestamp: new Date(),
+            sender: fromUserId,
+          };
+          await chat.save();
+        }
+
+        const message = new Message({
+          chatId: chat._id,
+          from: fromUserId,
+          to: toUserId,
+          text: text,
+          seen: false,
+        });
+        await message.save();
+
+        io.to(roomId).emit("messageReceived", "hi");
+      } catch (error) {
+        console.error("sendMessage error:", error);
+        socket.emit("error", { message: "Could not send message." });
+      }
     });
 
     socket.on("disconnect", () => {
