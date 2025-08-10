@@ -62,9 +62,10 @@ const initializeSocket = (server) => {
 
   io.on("connection", (socket) => {
     const fromUserId = socket.user?._id;
+
     socket.on("joinChat", async ({ toUserId }) => {
-      if (!toUserId) {
-        socket.emit("error", { message: "Missing recipient user ID." });
+      if (!toUserId || toUserId === fromUserId) {
+        socket.emit("error", { message: "Incorrect recipient user ID." });
         return;
       }
 
@@ -78,6 +79,18 @@ const initializeSocket = (server) => {
         const roomId = [fromUserId, toUserId].sort().join("$");
         console.log(fromUserId + " joined the room : " + roomId);
         socket.join(roomId);
+
+        const chat = await Chat.findOne({
+          participants: { $all: [fromUserId, toUserId] },
+        });
+
+        if (chat) {
+          const messages = await Message.find({
+            chatId: chat._id,
+          });
+
+          io.to(roomId).emit("messageHistory", messages);
+        }
       } catch (error) {
         console.error("Error in joinChat:", error);
         socket.emit("error", { message: "Internal server error." });
@@ -85,9 +98,19 @@ const initializeSocket = (server) => {
     });
 
     socket.on("sendMessage", async ({ toUserId, text }) => {
-      if (!toUserId || !text || text.trim().length === 0) return;
-      console.log(toUserId + " , " + text);
+      if (
+        !toUserId ||
+        toUserId === fromUserId ||
+        !text ||
+        text.trim().length === 0
+      )
+        return;
       try {
+        const toUser = await User.findById(toUserId);
+        if (!toUser) {
+          socket.emit("error", { message: "Recipient user not found." });
+          return;
+        }
         console.log("message sent by ", fromUserId);
         const roomId = [fromUserId, toUserId].sort().join("$");
 
@@ -116,17 +139,73 @@ const initializeSocket = (server) => {
 
         const message = new Message({
           chatId: chat._id,
-          from: fromUserId,
-          to: toUserId,
+          fromUserId,
+          toUserId,
           text: text,
           seen: false,
         });
         await message.save();
 
-        io.to(roomId).emit("messageReceived", "hi");
+        io.to(roomId).emit("messageReceived", message);
       } catch (error) {
         console.error("sendMessage error:", error);
         socket.emit("error", { message: "Could not send message." });
+      }
+    });
+
+    socket.on("typing", async ({ toUserId }) => {
+      try {
+        const toUser = await User.findById(toUserId);
+        if (!toUser) {
+          socket.emit("error", { message: "Recipient user not found." });
+          return;
+        }
+
+        console.log("User is typing : ", fromUserId);
+
+        const roomId = [fromUserId, toUserId].sort().join("$");
+
+        let chat = await Chat.findOne({
+          participants: { $all: [fromUserId, toUserId] },
+        });
+
+        if (!chat) {
+          return;
+        }
+        io.to(roomId).emit("typing", toUserId);
+        return;
+      } catch (error) {
+        console.error("Error sending Istyping indicator: ", error);
+        socket.emit("error", { message: "Error sending Istyping indicator." });
+      }
+    });
+
+    socket.on("stopTyping", async ({ toUserId }) => {
+      try {
+        const toUser = await User.findById(toUserId);
+        if (!toUser) {
+          socket.emit("error", { message: "Recipient user not found." });
+          return;
+        }
+
+        console.log("User stopped typing : ", fromUserId);
+
+        const roomId = [fromUserId, toUserId].sort().join("$");
+
+        let chat = await Chat.findOne({
+          participants: { $all: [fromUserId, toUserId] },
+        });
+
+        if (!chat) {
+          return;
+        }
+        io.to(roomId).emit("stopTyping", toUserId);
+        return;
+      } catch (error) {
+        console.error("Error sending stopTyping indicator: ", error);
+        socket.emit("error", {
+          message: "Error sending stopTyping indicator.",
+        });
       }
     });
 
