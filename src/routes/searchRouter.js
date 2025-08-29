@@ -10,7 +10,12 @@ searchRouter.get("/search", userAuth, async (req, res) => {
   try {
     const user = req.user._id;
     const searchQuery = req.query.query;
-    if (!searchQuery || typeof searchQuery !== "string") {
+    if (
+      !searchQuery ||
+      typeof searchQuery !== "string" ||
+      searchQuery.length === 0 ||
+      searchQuery.length > 20
+    ) {
       return res.status(400).send({ error: "Invalid or empty search query." });
     }
     const searchRegex = new RegExp(escapeRegex(searchQuery), "i");
@@ -85,6 +90,8 @@ searchRouter.get("/search/list", userAuth, async (req, res) => {
     });
   } catch (error) {}
 });
+
+searchRouter.get("search/friends", userAuth, async (req, res) => {});
 
 function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
