@@ -11,7 +11,7 @@ const fs = require("fs/promises");
 
 profileRouter.get("/profile/view", userAuth, (req, res) => {
   try {
-    let user = req.user;
+    const user = req.user;
     delete user.password;
 
     const optimizedProfileImg = cloudinary.url(user.photo.public_id, {
