@@ -16,7 +16,6 @@ const validationProfileEdit = (req) => {
   const allowedEdits = [
     "firstName",
     "lastName",
-    "gender",
     "age",
     "about",
     "skills",
