@@ -3,14 +3,25 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 
+const setAuthCookie = (res, token) => {
+  res.cookie("token", token, {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+  });
+};
+
 const SignupController = async (req, res) => {
   try {
     validationSignUp(req);
 
     const { firstName, lastName, emailId, password } = req.body;
 
+    const email = emailId.toLowerCase();
+
     const userExists = await User.findOne({
-      emailId,
+      emailId: email,
     });
 
     if (userExists) {
@@ -19,14 +30,14 @@ const SignupController = async (req, res) => {
         .json({ error: "EmailId already exists, please login" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     console.log("password hashed");
 
     const user = new User({
       firstName,
       lastName,
-      emailId,
+      emailId: email,
       password: hashedPassword,
     });
     await user.save();
@@ -36,18 +47,23 @@ const SignupController = async (req, res) => {
       expiresIn: "1d",
     });
 
-    res.cookie("token", token, {
-      expires: new Date(Date.now() + 8 * 3600000),
-      httpOnly: true,
-    });
+    setAuthCookie(res, token);
     res.json({
       _id: user._id,
       firstName: user.firstName,
+      lastName: user.lastName,
       emailId: user.emailId,
     });
-  } catch (error) {
-    console.error("Signup error: ", error);
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    if (
+      err.message.includes("Name") ||
+      err.message.includes("Email") ||
+      err.message.includes("Password")
+    ) {
+      return res.status(400).json({ error: err.message });
+    }
+    console.error(err.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -55,27 +71,26 @@ const LoginController = async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
-    if (!emailId) {
-      throw new Error("EmailId is missing");
+    if (!emailId || !password) {
+      return res.status(400).json({ error: "Email and password are missing" });
     }
-    const user = await User.findOne({ emailId: emailId });
+    const user = await User.findOne({ emailId: emailId.toLowerCase() }).select(
+      "+password"
+    );
     if (!user) {
-      throw new Error("Invalid Credentials");
+      return res.status(400).json({ error: "Invalid Credentials" });
     }
     const verifyPassword = await bcrypt.compare(password, user.password);
 
     if (!verifyPassword) {
-      throw new Error("Invalid Credentials");
+      return res.status(400).json({ error: "Invalid Credentials" });
     }
 
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
-    res.cookie("token", token, {
-      expires: new Date(Date.now() + 8 * 3600000),
-      httpOnly: true,
-    });
+    setAuthCookie(res, token);
     res.json({
       _id: user._id,
       firstName: user.firstName,
@@ -86,13 +101,13 @@ const LoginController = async (req, res) => {
       college: user.college,
       photo: {
         url: user.photo.url,
-        _id: user.photo._id,
       },
       about: user.about,
       skills: user.skills,
     });
   } catch (error) {
-    res.status(400).send(error.message);
+    console.log(error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -100,14 +115,18 @@ const Logout = async (req, res) => {
   try {
     const { token } = req.cookies;
     if (!token) {
-      throw new Error("User not logged in");
+      return res.status(200).json({ message: "No active session" });
     }
-    res.cookie("token", null, {
-      expires: new Date(Date.now()),
+    res.cookie("token", "", {
+      maxAge: 0,
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
     });
-    res.send("Logged Out");
+    res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
-    res.status(400).send(error.message);
+    console.log(error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
