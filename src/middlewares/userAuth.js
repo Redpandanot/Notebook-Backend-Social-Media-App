@@ -5,22 +5,28 @@ const userAuth = async (req, res, next) => {
   try {
     const { token } = req.cookies;
     if (!token) {
-      throw new Error("Invalid token");
+      return res.status(401).json({ error: "Authentication required" });
     }
     const decodedObj = jwt.verify(token, process.env.JWT_SECRET);
 
     const { _id, iat } = decodedObj;
     const user = await User.findById(_id);
     if (!user) {
-      res.send("Please sign up");
+      res.clearCookie("token");
+      return res.status(401).json({ error: "Authentication required" });
     }
 
     // Convert iat (seconds) to milliseconds for comparison with passwordChangedAt (Date object)
     const iatMilliseconds = iat * 1000;
-    if (user.passwordChangedAt > iatMilliseconds) {
+    if (
+      user.passwordChangedAt &&
+      user.passwordChangedAt.getTime() > iatMilliseconds
+    ) {
       // Password has been changed after the token was issued
       res.clearCookie("token");
-      throw new Error("Invalid token please login");
+      return res
+        .status(401)
+        .json({ error: "Password changed, please login again" });
     }
 
     req.user = {
@@ -34,13 +40,13 @@ const userAuth = async (req, res, next) => {
       photo: user.photo,
       about: user.about,
       skills: user.skills,
-      password: user.password,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
     next();
   } catch (error) {
-    next(new Error("Authentication error"));
+    res.clearCookie("token");
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
 };
 
