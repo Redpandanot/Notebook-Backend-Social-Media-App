@@ -7,13 +7,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      minLength: 3,
-      maxLength: 20,
+      minlength: 3,
+      maxlength: 20,
     },
     lastName: {
       type: String,
       trim: true,
       default: "",
+      minlength: 1,
+      maxlength: 20,
     },
     emailId: {
       type: String,
@@ -30,11 +32,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      validate(value) {
-        if (!validator.isStrongPassword(value)) {
-          throw new Error("Not A Strong Password");
-        }
-      },
+      select: false,
     },
     age: {
       type: Number,
@@ -44,7 +42,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       lowercase: true,
       validate(value) {
-        if (!["male", "female", "transgender", "nonbinary"].includes(value)) {
+        if (
+          ![
+            "male",
+            "female",
+            "transgender",
+            "nonbinary",
+            "prefer not to say",
+          ].includes(value)
+        ) {
           throw new Error("Gender data is not valid");
         }
       },
