@@ -160,14 +160,19 @@ const populateReplies = async (postId, parentCommentId) => {
 };
 
 const optimizedImg = (publicId, width) => {
-  const optimizedUrl = cloudinary.url(publicId, {
-    fetch_format: "auto",
-    quality: "auto",
-    secure: true,
-    width: width,
-    crop: "limit",
-  });
-  return optimizedUrl;
+  try {
+    const optimizedUrl = cloudinary.url(publicId, {
+      fetch_format: "auto",
+      quality: "auto",
+      secure: true,
+      width: width,
+      crop: "limit",
+    });
+    return optimizedUrl;
+  } catch (error) {
+    console.error("Cloudinary image optimization failed:", error.message);
+    return null;
+  }
 };
 
 module.exports = {
