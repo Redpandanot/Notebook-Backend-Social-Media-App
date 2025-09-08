@@ -74,10 +74,7 @@ const createPost = async (userId, req, title, description) => {
       );
     }
 
-    return res.status(500).json({
-      message: "Unable to create post due to an internal server error.",
-      error: error.message,
-    });
+    throw error;
   } finally {
     //Delete local temporary file
     if (localFilePaths.length > 0) {
@@ -93,7 +90,6 @@ const createPost = async (userId, req, title, description) => {
             if (unlinkError.code !== "ENOENT") {
               console.error(
                 `Error deleting local temporary file ${path}:`,
-
                 unlinkError
               );
             }

@@ -97,31 +97,29 @@ const PasswordEditController = async (req, res) => {
 const ProfileDetailsController = async (req, res) => {
   try {
     const { profileId } = req.params;
-    if (typeof profileId !== "string") {
-      res.send("Invalid Profile");
-    } else {
-      const profileDetail = await User.findById({
-        _id: profileId,
-      });
-      if (!profileDetail) {
-        res.send("User does not exist");
-      } else {
-        const optimizedProfileImg = cloudinary.url(
-          profileDetail.photo.public_id,
-          {
-            fetch_format: "auto",
-            quality: "auto",
-            secure: true,
-            width: 400,
-            crop: "limit",
-          }
-        );
-        profileDetail.photo = { url: optimizedProfileImg };
-        res.send(profileDetail);
-      }
+
+    if (!profileId || typeof profileId !== "string") {
+      return res.status(400).json({ error: "Invalid Profile ID" });
     }
+
+    const profileDetail = await User.findById({
+      _id: profileId,
+    });
+    if (!profileDetail) {
+      return res.status(404).json({ error: "User does not exist" });
+    }
+    const optimizedProfileImg = optimizedImg(
+      profileDetail.photo.public_id,
+      400
+    );
+
+    const responseProfile = profileDetail.toObject();
+    responseProfile.photo = { url: optimizedProfileImg };
+
+    res.status(200).json(responseProfile);
   } catch (error) {
-    res.send(error.message);
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Server error while fetching profile" });
   }
 };
 
