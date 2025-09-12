@@ -105,27 +105,12 @@ const optimizeImages = (posts) => {
     const newPost = { ...post };
     if (newPost.photos && newPost.photos.length > 0) {
       newPost.photos = newPost.photos.map((photo) => {
-        const optimizedUrl = cloudinary.url(photo.public_id, {
-          fetch_format: "auto", // Deliver in optimal format (WebP, AVIF, JPG, etc.)
-          quality: "auto", // Adjust quality automatically
-          secure: true, // Ensure HTTPS
-          width: 400,
-          crop: "limit",
-        });
+        const optimizedUrl = optimizedImg(photo.public_id, 400);
         return { url: optimizedUrl };
       });
     }
     if (newPost.userId && newPost.userId.photo && newPost.userId.photo.url) {
-      const optimizedProfileImg = cloudinary.url(
-        newPost.userId.photo.public_id,
-        {
-          fetch_format: "auto",
-          quality: "auto",
-          secure: true,
-          width: 50,
-          crop: "limit",
-        }
-      );
+      const optimizedProfileImg = optimizedImg(userId.photo.public_id, 50);
 
       newPost.userId.photo.url = optimizedProfileImg;
     }
