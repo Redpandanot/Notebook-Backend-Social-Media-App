@@ -103,17 +103,23 @@ const createPost = async (userId, req, title, description) => {
 const optimizeImages = (posts) => {
   const optimizedPosts = posts.map((post) => {
     const newPost = { ...post };
+
     if (newPost.photos && newPost.photos.length > 0) {
       newPost.photos = newPost.photos.map((photo) => {
         const optimizedUrl = optimizedImg(photo.public_id, 400);
         return { url: optimizedUrl };
       });
     }
+
     if (newPost.userId && newPost.userId.photo && newPost.userId.photo.url) {
-      const optimizedProfileImg = optimizedImg(userId.photo.public_id, 50);
+      const optimizedProfileImg = optimizedImg(
+        newPost.userId.photo.public_id,
+        50
+      );
 
       newPost.userId.photo.url = optimizedProfileImg;
     }
+
     return newPost;
   });
   return optimizedPosts;

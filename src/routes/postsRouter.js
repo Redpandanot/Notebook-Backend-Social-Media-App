@@ -1,11 +1,7 @@
 const express = require("express");
 const userAuth = require("../middlewares/userAuth");
 const postsRouter = express.Router();
-const Posts = require("../models/posts");
-const Connections = require("../models/connections");
 const { upload } = require("../utils/cloudinaryConfig");
-const fs = require("fs/promises");
-const { optimizeImages } = require("../utils/helperFunctions");
 const {
   CreatePostController,
   CreateGroupContoller,

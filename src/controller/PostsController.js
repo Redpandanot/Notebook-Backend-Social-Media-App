@@ -6,6 +6,7 @@ const { validatePosts } = require("../utils/validation");
 const mongoose = require("mongoose");
 const { findOneAndDelete } = require("../models/user");
 const Comments = require("../models/comments");
+const Connections = require("../models/connections");
 
 const CreatePostController = async (req, res) => {
   try {

@@ -277,7 +277,8 @@ const GetFriendsListController = async (req, res) => {
         ? connection.toUserId
         : connection.fromUserId;
 
-      const optimizedProfileImg = optimizedImg(friend.photo.public_id, 50);
+      const optimizedProfileImg = optimizedImg(friend.photo?.public_id, 50);
+
       return {
         _id: friend._id,
         firstName: friend.firstName,
@@ -343,7 +344,7 @@ const FindNewFriendsController = async (req, res) => {
 
     const urlUpdatedConnectionRequest = users.map((request) => {
       if (!request.photo || !request.photo.public_id) return request;
-      const optimizedProfileImg = optimizedImg(request.photo.public_id, 50);
+      const optimizedProfileImg = optimizedImg(request.photo?.public_id, 50);
       return {
         ...request,
         photo: {
@@ -448,7 +449,7 @@ const FollowersListController = async (req, res) => {
       };
     });
 
-    res.status(200).json(imgOptimizedFollowers);
+    res.status(200).json(imgOptimizedFriendsList);
   } catch (error) {
     console.error("Error fetching followers:", error.message);
     res.status(500).json({ message: "Failed to fetch followers" });
