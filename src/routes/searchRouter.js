@@ -91,7 +91,7 @@ searchRouter.get("/search/list", userAuth, async (req, res) => {
   } catch (error) {}
 });
 
-searchRouter.get("search/friends", userAuth, async (req, res) => {});
+searchRouter.get("search/friends", userAuth, async (req, res) => {}); //to search friends in chat section
 
 function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
