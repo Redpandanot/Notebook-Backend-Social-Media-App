@@ -1,7 +1,12 @@
 const Connections = require("../models/connections");
 const User = require("../models/user");
 const Followers = require("../models/followers");
-const { optimizedImg } = require("../utils/helperFunctions");
+const mongoose = require("mongoose");
+const {
+  optimizedImg,
+  connectionMapper,
+  isFollowing,
+} = require("../utils/helperFunctions");
 
 const SendFriendRequestController = async (req, res) => {
   try {
@@ -125,13 +130,13 @@ const FollowController = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const followRelation = await Followers.findOne({
+    const followRelation = await Followers.findOneAndDelete({
       followee: followeeId,
       follower: followerId,
     });
 
     if (followRelation) {
-      return res.status(400).json({ message: "Already following this user" });
+      return res.status(201).json({ message: "User unfollowed" });
     }
 
     const newFollow = new Followers({
@@ -139,46 +144,9 @@ const FollowController = async (req, res) => {
       follower: followerId,
     });
     await newFollow.save();
-    res.status(201).json(newFollow);
+    res.status(201).json({ message: "User followed" });
   } catch (error) {
     console.error("Error following user:", error.message);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-const UnFollowController = async (req, res) => {
-  try {
-    const followerId = req.user._id;
-    const { userId: followeeId } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(followeeId)) {
-      return res.status(400).json({ message: "Invalid userId" });
-    }
-
-    if (followerId.equals(followeeId)) {
-      return res.status(400).json({ message: "You cannot unfollow yourself" });
-    }
-
-    const followeeExists = await User.findById(followeeId);
-
-    if (!followeeExists) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const deletedFollow = await Followers.findOneAndDelete({
-      followee: followeeId,
-      follower: followerId,
-    });
-
-    if (!deletedFollow) {
-      return res
-        .status(400)
-        .json({ message: "You are not following this user" });
-    }
-
-    res.status(200).json(deletedFollow);
-  } catch (error) {
-    console.error("Error unfollowing user:", error.message);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -240,68 +208,6 @@ const GetFriendRequestsController = async (req, res) => {
   }
 };
 
-const GetFriendsListController = async (req, res) => {
-  try {
-    const user = req.user._id;
-    const page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
-    limit = limit > 10 ? 10 : limit;
-    const skip = (page - 1) * limit;
-
-    const connections = await Connections.find({
-      $or: [
-        {
-          fromUserId: user,
-          status: "accepted",
-        },
-        {
-          toUserId: user,
-          status: "accepted",
-        },
-      ],
-    })
-      .skip(skip)
-      .limit(limit)
-      .populate({
-        path: "fromUserId",
-        select: "firstName lastName photo",
-      })
-      .populate({
-        path: "toUserId",
-        select: "firstName lastName photo",
-      })
-      .lean();
-
-    const organisedFriendsList = connections.map((connection) => {
-      const friend = connection.fromUserId._id.equals(user)
-        ? connection.toUserId
-        : connection.fromUserId;
-
-      const optimizedProfileImg = optimizedImg(friend.photo?.public_id, 50);
-
-      return {
-        _id: friend._id,
-        firstName: friend.firstName,
-        lastName: friend.lastName,
-        photo: {
-          ...friend.photo,
-          url: optimizedProfileImg,
-        },
-      };
-    });
-
-    res.status(200).json({
-      page,
-      limit,
-      total: organisedFriendsList.length,
-      friends: organisedFriendsList,
-    });
-  } catch (error) {
-    console.error("Error fetching friends list:", error.message);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 const FindNewFriendsController = async (req, res) => {
   try {
     const user = req.user._id;
@@ -325,24 +231,27 @@ const FindNewFriendsController = async (req, res) => {
 
     const hideExisitingRequests = new Set();
     existingConnections.forEach((connection) => {
-      hideExisitingRequests.add(connection.fromUserId.toString());
-      hideExisitingRequests.add(connection.toUserId.toString());
+      if (connection.fromUserId.toString() !== user.toString()) {
+        hideExisitingRequests.add(connection.fromUserId.toString());
+      }
+      if (connection.toUserId.toString() !== user.toString()) {
+        hideExisitingRequests.add(connection.toUserId.toString());
+      }
     });
 
     const users = await User.find({
-      $and: [
-        {
-          _id: { $nin: Array.from(hideExisitingRequests) },
-        },
-        { _id: { $ne: user } },
-      ],
+      _id: { $nin: [...hideExisitingRequests, user] },
     })
       .skip(skip)
       .limit(limit)
       .select("firstName lastName emailId photo")
       .lean();
 
-    const urlUpdatedConnectionRequest = users.map((request) => {
+    if (!users.length) {
+      return res.status(200).json([]);
+    }
+
+    const usersListWithUrl = users.map((request) => {
       if (!request.photo || !request.photo.public_id) return request;
       const optimizedProfileImg = optimizedImg(request.photo?.public_id, 50);
       return {
@@ -354,7 +263,14 @@ const FindNewFriendsController = async (req, res) => {
       };
     });
 
-    res.status(200).json(urlUpdatedConnectionRequest);
+    const followSet = await isFollowing(user, users);
+
+    const usersWithFollowStatus = usersListWithUrl.map((item) => ({
+      ...item,
+      isFollowing: followSet.has(item._id.toString()),
+    }));
+
+    res.status(200).json(usersWithFollowStatus);
   } catch (error) {
     console.error("Error fetching friends list:", error.message);
     res.status(500).json({ message: "Server error" });
@@ -404,6 +320,76 @@ const UnFriendController = async (req, res) => {
   }
 };
 
+const GetFriendsListController = async (req, res) => {
+  try {
+    const user = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 10 ? 10 : limit;
+    const skip = (page - 1) * limit;
+
+    const connections = await Connections.find({
+      $or: [
+        {
+          fromUserId: user,
+          status: "accepted",
+        },
+        {
+          toUserId: user,
+          status: "accepted",
+        },
+      ],
+    })
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: "fromUserId",
+        select: "firstName lastName photo",
+      })
+      .populate({
+        path: "toUserId",
+        select: "firstName lastName photo",
+      })
+      .lean();
+
+    const organisedFriendsList = connections.map((connection) => {
+      const friend =
+        connection.fromUserId._id.toString() === user.toString()
+          ? connection.toUserId
+          : connection.fromUserId;
+
+      const optimizedProfileImg = optimizedImg(friend.photo?.public_id, 50);
+
+      return {
+        _id: friend._id,
+        firstName: friend.firstName,
+        lastName: friend.lastName,
+        photo: {
+          ...friend.photo,
+          url: optimizedProfileImg,
+        },
+      };
+    });
+
+    const followSet = await isFollowing(user, organisedFriendsList);
+
+    const friendsListWithFollowStatus = organisedFriendsList.map((friend) => ({
+      ...friend,
+      isFollowing: followSet.has(friend._id.toString()),
+    }));
+
+    res.status(200).json({
+      page,
+      limit,
+      total: friendsListWithFollowStatus.length,
+      friends: friendsListWithFollowStatus,
+    });
+  } catch (error) {
+    console.error("Error fetching friends list:", error.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const FollowersListController = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -428,7 +414,7 @@ const FollowersListController = async (req, res) => {
         !item.follower.photo ||
         !item.follower.photo.public_id
       ) {
-        console.log("images not optmizied as needed info was missing");
+        console.log("images not optmizied as required info was missing");
         return item;
       }
 
@@ -509,7 +495,7 @@ const FollowingListController = async (req, res) => {
   }
 };
 
-const GetUersFollowersListController = async (req, res) => {
+const GetUsersFollowersListController = async (req, res) => {
   try {
     const { userId } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -626,13 +612,12 @@ module.exports = {
   SendFriendRequestController,
   AcceptFriendRequestController,
   FollowController,
-  UnFollowController,
   GetFriendRequestsController,
-  GetFriendsListController,
   FindNewFriendsController,
   UnFriendController,
+  GetFriendsListController,
   FollowersListController,
   FollowingListController,
   GetUsersFollowingListController,
-  GetUersFollowersListController,
+  GetUsersFollowersListController,
 };

@@ -26,7 +26,7 @@ connectionRouter.post(
 
 connectionRouter.post("/follow/:userId", userAuth, FollowController);
 
-connectionRouter.post("/unfollow/:userId", userAuth, UnFollowController);
+// connectionRouter.post("/unfollow/:userId", userAuth, UnFollowController);
 
 connectionRouter.get(
   "/friend-requests/view",
