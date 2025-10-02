@@ -5,7 +5,7 @@ const {
   FollowersListController,
   FollowingListController,
   GetUsersFollowingListController,
-  GetUersFollowersListController,
+  GetUsersFollowersListController,
 } = require("../controller/ConnectionController");
 
 followRouter.get("/followers", userAuth, FollowersListController);
@@ -15,7 +15,7 @@ followRouter.get("/following", userAuth, FollowingListController);
 followRouter.get(
   "/followers/:userId",
   userAuth,
-  GetUersFollowersListController
+  GetUsersFollowersListController
 );
 
 followRouter.get(

@@ -2,6 +2,9 @@ const { cloudinary } = require("../utils/cloudinaryConfig");
 const fs = require("fs/promises");
 const Posts = require("../models/posts");
 const Comments = require("../models/comments");
+const Followers = require("../models/followers");
+const mongoose = require("mongoose");
+const Connections = require("../models/connections");
 
 const createPost = async (userId, req, title, description) => {
   let uploadedImagesData = [];
@@ -162,9 +165,39 @@ const optimizedImg = (publicId, width) => {
   }
 };
 
+const connectionMapper = (usersList) => {
+  const connectionMappedList = usersList.map((user) => isFollowing());
+  connectionMappedList = usersList.map((user) => isFriend());
+  return connectionMappedList;
+};
+
+const isFollowing = async (follower, users) => {
+  const followStatuses = await Followers.find({
+    follower,
+    followee: { $in: users.map((u) => u._id) },
+  })
+    .select("followee")
+    .lean();
+
+  return new Set(followStatuses.map((f) => f.followee.toString()));
+};
+
+const isFriend = async (user, usersList) => {
+  const friendShipStatus = await Connections.find({
+    fromUserId: user,
+    toUserId: { $in: usersList.map((u) => u._id) },
+    status: "accepted",
+  }).lean();
+
+  return friendShipStatus;
+};
+
 module.exports = {
   createPost,
   optimizeImages,
   populateReplies,
   optimizedImg,
+  connectionMapper,
+  isFollowing,
+  isFriend,
 };
