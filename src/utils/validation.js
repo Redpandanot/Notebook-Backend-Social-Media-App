@@ -5,13 +5,13 @@ const validationSignUp = (req) => {
 
   if (!firstName) {
     throw new Error("First Name is not valid");
-  } else if (firstName.length < 3 || firstName.length > 20) {
+  } else if (firstName.length < 3 || firstName.length > 30) {
     throw new Error(
       "First Name should be greater than 3 and less then 20 characters"
     );
-  } else if (lastName && (lastName.length < 1 || lastName.length > 20)) {
+  } else if (lastName && (lastName.length < 1 || lastName.length > 30)) {
     throw new Error(
-      "Last Name should be greater than 3 and less then 20 characters"
+      "Last Name should be greater than 1 and less then 20 characters"
     );
   } else if (!validator.isEmail(emailId.toLowerCase())) {
     throw new Error("Email is not valid");

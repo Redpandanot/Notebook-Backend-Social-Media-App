@@ -34,12 +34,19 @@ const SignupController = async (req, res) => {
 
     console.log("password hashed");
 
-    const user = new User({
-      firstName,
-      lastName,
-      emailId: email,
-      password: hashedPassword,
-    });
+    const user = lastName
+      ? new User({
+          firstName,
+          lastName,
+          emailId: email,
+          password: hashedPassword,
+        })
+      : new User({
+          firstName,
+          emailId: email,
+          password: hashedPassword,
+        });
+
     await user.save();
     console.log("user added , id: ", user._id);
 
@@ -53,6 +60,14 @@ const SignupController = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       emailId: user.emailId,
+      age: user.age,
+      gender: user.gender,
+      college: user.college,
+      photo: {
+        url: user.photo.url,
+      },
+      about: user.about,
+      skills: user.skills,
     });
   } catch (err) {
     if (

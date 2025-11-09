@@ -182,14 +182,14 @@ const isFollowing = async (follower, users) => {
   return new Set(followStatuses.map((f) => f.followee.toString()));
 };
 
-const isFriend = async (user, usersList) => {
-  const friendShipStatus = await Connections.find({
-    fromUserId: user,
-    toUserId: { $in: usersList.map((u) => u._id) },
-    status: "accepted",
+const isFriend = async (user1, user2) => {
+  const friendShipStatus = await Connections.findOne({
+    $or: [
+      { fromUserId: user1, toUserId: user2, status: "accepted" },
+      { fromUserId: user2, toUserId: user1, status: "accepted" },
+    ],
   }).lean();
-
-  return friendShipStatus;
+  return friendShipStatus ? true : false;
 };
 
 module.exports = {
