@@ -182,14 +182,14 @@ const isFollowing = async (follower, users) => {
   return new Set(followStatuses.map((f) => f.followee.toString()));
 };
 
-const isFriend = async (user1, user2) => {
+const connectionStatus = async (user1, user2) => {
   const friendShipStatus = await Connections.findOne({
     $or: [
-      { fromUserId: user1, toUserId: user2, status: "accepted" },
-      { fromUserId: user2, toUserId: user1, status: "accepted" },
+      { fromUserId: user1, toUserId: user2 },
+      { fromUserId: user2, toUserId: user1 },
     ],
   }).lean();
-  return friendShipStatus ? true : false;
+  return friendShipStatus ? friendShipStatus : false;
 };
 
 module.exports = {
@@ -199,5 +199,5 @@ module.exports = {
   optimizedImg,
   connectionMapper,
   isFollowing,
-  isFriend,
+  connectionStatus,
 };

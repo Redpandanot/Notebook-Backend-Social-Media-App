@@ -2,7 +2,7 @@ const { cloudinary } = require("../utils/cloudinaryConfig");
 const {
   optimizedImg,
   isFollowing,
-  isFriend,
+  connectionStatus,
 } = require("../utils/helperFunctions");
 const User = require("../models/user");
 const { validationProfileEdit } = require("../utils/validation");
@@ -118,17 +118,21 @@ const ProfileDetailsController = async (req, res) => {
       400
     );
 
-    const responseProfile = profileDetail.toObject();
+    let responseProfile = profileDetail.toObject();
     responseProfile.photo = { url: optimizedProfileImg };
 
     const followSet = await isFollowing(user, [profileDetail]);
-    const friendStatus = await isFriend(user, profileId);
+    const connection = await connectionStatus(user, profileId);
 
-    res.status(200).json({
-      ...responseProfile,
-      isFollowing: followSet.has(profileId),
-      isFriend: friendStatus,
-    });
+    responseProfile = !user.equals(profileId)
+      ? {
+          ...responseProfile,
+          isFollowing: followSet.has(profileId),
+          connectionStatus: connection,
+        }
+      : responseProfile;
+
+    res.status(200).json(responseProfile);
   } catch (error) {
     console.error("Profile fetch error:", error);
     res.status(500).json({ error: "Server error while fetching profile" });
