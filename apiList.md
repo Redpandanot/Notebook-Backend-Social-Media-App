@@ -1,86 +1,119 @@
-API Documentation 📡 
+# 🧾 API List
 
-Welcome to the API documentation for our platform. Below is a list of all available endpoints, grouped by router.
+This document contains all API routes grouped by module, including HTTP method, URL, authentication requirement, and a short description.
 
+---
 
+## 🔐 Auth Routes (`/auth`)
 
-<details> <summary>🛡️ <strong>Auth Router</strong></summary>
-POST /auth/signup – Register a new user
+| Method | Route     | Auth | Description                   |
+| ------ | --------- | ---- | ----------------------------- |
+| POST   | `/signup` | ❌   | Register a new user           |
+| POST   | `/login`  | ❌   | Log in and receive auth token |
+| GET    | `/logout` | ✔️   | Log out current user          |
 
-POST /auth/login – Log in a user
+---
 
-GET /auth/logout – Log out the current user
+## 💬 Chat Routes (`/chat`)
 
-</details>
-<details> <summary>👤 <strong>Profile Router</strong></summary>
-GET /profile/view – View profile information
+| Method | Route    | Auth | Description                          |
+| ------ | -------- | ---- | ------------------------------------ |
+| GET    | `/chats` | ✔️   | Get all chats for the logged-in user |
 
-PATCH /profile/edit – Edit profile details
+---
 
-PATCH /profile/password – Change user password
+## 🤝 Connection / Friends Routes (`/connections`)
 
-</details>
-<details> <summary>🔗 <strong>Connection Router</strong></summary>
-POST /connections/friend-request/send/:status/:userId
-Send a friend request (status must be requested)
+### Friend Requests
 
-POST /connections/friend-requests/review/:status/:requestId
-Review a request (status can be accepted or rejected)
+| Method | Route                                 | Auth | Description                                              |
+| ------ | ------------------------------------- | ---- | -------------------------------------------------------- |
+| POST   | `/friend-request/:status/:userId`     | ✔️   | Send a friend request (`status` = pending, cancel, etc.) |
+| POST   | `/friend-requests/:status/:requestId` | ✔️   | Accept or reject a friend request                        |
+| GET    | `/friend-requests/view`               | ✔️   | View all incoming friend requests                        |
 
-POST /connections/follow/:userId – Follow a user
+### Friends List & Suggestions
 
-POST /connections/unfollow/:userId – Unfollow a user
+| Method | Route                 | Auth | Description                   |
+| ------ | --------------------- | ---- | ----------------------------- |
+| GET    | `/friends-list`       | ✔️   | Get friends list              |
+| GET    | `/friend-suggestions` | ✔️   | Suggest potential new friends |
+| POST   | `/unfriend/:friendId` | ✔️   | Remove / unfriend a user      |
 
-GET /connections/friend-requests/view – View incoming friend requests
+### Follow System
 
-GET /connections/friends-list – Get list of friends
+| Method | Route             | Auth                | Description   |
+| ------ | ----------------- | ------------------- | ------------- | ----------------------------------------- | --- |
+| POST   | `/follow/:userId` | ✔️                  | Follow a user |
+| <!--   | POST              | `/unfollow/:userId` | ✔️            | Unfollow a user (currently commented out) | --> |
 
-GET /connections/new-friends – Discover new friends
+---
 
-POST /connections/unFriend/:friendId – Unfriend a user
+## 🧵 Discussion Routes (`/discussion`)
 
-</details>
-<details> <summary>💬 <strong>Discussion Router</strong></summary>
-GET /discussions/discussion/:postId – Get discussions on a post
+| Method | Route                 | Auth | Description                             |
+| ------ | --------------------- | ---- | --------------------------------------- |
+| GET    | `/discussion/:postId` | ✔️   | Get nested comments for a specific post |
 
-</details>
-<details> <summary>👥 <strong>Follow Router</strong></summary>
-GET /follows/followers/:userId – Get list of followers
+---
 
-GET /follows/following/:userId – Get list of following users
+## 👥 Followers / Following Routes (`/follow`)
 
-</details>
-<details> <summary>🏘️ <strong>Group Router</strong></summary>
-POST /groups/group/create – Create a new group
+| Method | Route                | Auth | Description                         |
+| ------ | -------------------- | ---- | ----------------------------------- |
+| GET    | `/followers`         | ✔️   | Get logged-in user's followers      |
+| GET    | `/following`         | ✔️   | Get logged-in user's following list |
+| GET    | `/followers/:userId` | ✔️   | Get follower list of another user   |
+| GET    | `/following/:userId` | ✔️   | Get following list of another user  |
 
-POST /groups/group/joinRequest/:groupId – Request to join a group
+---
 
-POST /groups/group/addModerator/:groupId/:newMemberId – Promote a member to moderator
+## 📝 Posts Routes (`/posts`)
 
-POST /groups/group/removeModerator/:groupId/:moderatorId – Remove a moderator
+### Post Creation & Interactions
 
-POST /groups/group/removeMember/:groupId/:memberId – Remove a group member
+| Method | Route                          | Auth | Description                              |
+| ------ | ------------------------------ | ---- | ---------------------------------------- |
+| POST   | `/post/create`                 | ✔️   | Create a new post (supports file upload) |
+| POST   | `/posts/group/create/:groupId` | ✔️   | Create a post inside a group             |
+| POST   | `/posts/like/:postId`          | ✔️   | Like / unlike a post                     |
+| POST   | `/posts/comment/:postId`       | ✔️   | Add a comment to a post                  |
 
-</details>
-<details> <summary>📝 <strong>Posts Router</strong></summary>
-POST /posts/post/create – Create a new post
+### Post Retrieval
 
-POST /posts/posts/group/create/:groupId – Create a post in a group
+| Method | Route            | Auth | Description                   |
+| ------ | ---------------- | ---- | ----------------------------- |
+| GET    | `/posts/:userId` | ✔️   | View posts by a specific user |
+| GET    | `/posts/feed`    | ✔️   | Get feed posts                |
+| GET    | `/post/:postId`  | ✔️   | View single post + discussion |
 
-GET /posts/posts/view – View all posts
+---
 
-GET /posts/posts/view/:userId – View posts by user
+## 👤 Profile Routes (`/profile`)
 
-GET /posts/posts/feed – View personalized feed
+| Method | Route                    | Auth | Description                  |
+| ------ | ------------------------ | ---- | ---------------------------- |
+| GET    | `/profile`               | ✔️   | Get logged-in user's profile |
+| GET    | `/profile/:profileId`    | ✔️   | View another user's profile  |
+| POST   | `/profile/edit`          | ✔️   | Edit user profile            |
+| POST   | `/profile/edit/password` | ✔️   | Change password              |
+| POST   | `/profile/image`         | ✔️   | Upload profile photo         |
 
-GET /posts/post/view/:postId – View a single post
+---
 
-POST /posts/posts/like/:postId – Like a post
+## 🔍 Search Routes (`/search`)
 
-POST /posts/posts/comment/:postId – Comment on a post
+| Method | Route                | Auth | Description                                           |
+| ------ | -------------------- | ---- | ----------------------------------------------------- |
+| GET    | `/search?query=`     | ✔️   | Search users (light search)                           |
+| GET    | `/search/all?query=` | ✔️   | Search users + posts + comments                       |
+| GET    | `search/friends`     | ✔️   | Search friends in chat section (empty implementation) |
 
-</details>
+---
 
+## 🛠 Helper Functions Used
 
-📝 Note : 
-Feel free to fork this project and open issues or pull requests with suggestions or improvements. I welcome contributions!
+- `escapeRegex(str)` – Escapes special characters for regex search
+- `populateReplies(postId, parentCommentId)` – Recursively fetch nested replies
+
+---

@@ -13,13 +13,13 @@ const {
 } = require("../controller/ConnectionController");
 
 connectionRouter.post(
-  "/friend-request/send/:status/:userId",
+  "/friend-request/:status/:userId",
   userAuth,
   SendFriendRequestController
 );
 
 connectionRouter.post(
-  "/friend-requests/review/:status/:requestId",
+  "/friend-requests/:status/:requestId",
   userAuth,
   AcceptFriendRequestController
 );
@@ -36,8 +36,8 @@ connectionRouter.get(
 
 connectionRouter.get("/friends-list", userAuth, GetFriendsListController);
 
-connectionRouter.get("/new-friends", userAuth, FindNewFriendsController);
+connectionRouter.get("/friend-suggestions", userAuth, FindNewFriendsController);
 
-connectionRouter.post("/unFriend/:friendId", userAuth, UnFriendController);
+connectionRouter.post("/unfriend/:friendId", userAuth, UnFriendController);
 
 module.exports = connectionRouter;
