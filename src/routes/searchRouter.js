@@ -39,7 +39,7 @@ searchRouter.get("/search", userAuth, async (req, res) => {
   } catch (error) {}
 });
 
-searchRouter.get("/search/list", userAuth, async (req, res) => {
+searchRouter.get("/search/all", userAuth, async (req, res) => {
   try {
     const user = req.user._id;
     const searchQuery = req.query.query;

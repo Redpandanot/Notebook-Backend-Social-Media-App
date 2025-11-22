@@ -10,20 +10,16 @@ const {
   UploadController,
 } = require("../controller/ProfileController");
 
-profileRouter.get("/profile/view", userAuth, UserProfileDetailsController);
+profileRouter.get("/profile", userAuth, UserProfileDetailsController);
 
 profileRouter.post("/profile/edit", userAuth, ProfileEditController);
 
 profileRouter.post("/profile/edit/password", userAuth, PasswordEditController);
 
-profileRouter.get(
-  "/profile/view/:profileId",
-  userAuth,
-  ProfileDetailsController
-);
+profileRouter.get("/profile/:profileId", userAuth, ProfileDetailsController);
 
 profileRouter.post(
-  "/profile/addImage",
+  "/profile/image",
   userAuth,
   upload.single("file"),
   UploadController
