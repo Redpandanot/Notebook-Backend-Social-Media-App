@@ -10,7 +10,7 @@ This document contains all API routes grouped by module, including HTTP method, 
 | ------ | --------- | ---- | ----------------------------- |
 | POST   | `/signup` | ❌   | Register a new user           |
 | POST   | `/login`  | ❌   | Log in and receive auth token |
-| GET    | `/logout` | ✔️   | Log out current user          |
+| POST   | `/logout` | ✔️   | Log out current user          |
 
 ---
 
