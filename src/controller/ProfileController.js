@@ -190,6 +190,9 @@ const UploadController = async (req, res) => {
             url: DEFAULT_IMAGE_URL,
             public_id: DEFAULT_IMAGE_ID,
           },
+        },
+        {
+          runValidators: true,
         }
       );
       return res.status(404).json({ message: "Unable to update." });

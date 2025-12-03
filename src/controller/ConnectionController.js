@@ -56,16 +56,15 @@ const SendFriendRequestController = async (req, res) => {
         .json({ message: "Connection request already exists" });
     }
 
-    const newRequest = new Connections({
+    const newRequest = new Connections.create({
       fromUserId,
       toUserId,
       status,
     });
-    const connectionRequest = await newRequest.save();
 
     res.status(201).json({
       message: "Friend request sent successfully",
-      data: connectionRequest,
+      data: newRequest,
     });
   } catch (error) {
     console.error("Error sending friend request:", error.message);
