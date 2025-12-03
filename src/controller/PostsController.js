@@ -86,7 +86,7 @@ const LikeController = async (req, res) => {
       const unlikePost = await Posts.findByIdAndUpdate(
         postId,
         { $inc: { likeCount: -1 } },
-        { new: true }
+        { runValidators: true, new: true }
       );
       return res.status(200).json({
         message: "Post unliked",
@@ -101,7 +101,7 @@ const LikeController = async (req, res) => {
       const likePost = await Posts.findByIdAndUpdate(
         postId,
         { $inc: { likeCount: 1 } },
-        { new: true }
+        { runValidators: true, new: true }
       );
       return res.status(200).json({
         message: "post liked successfully",
@@ -256,9 +256,13 @@ const AddCommentController = async (req, res) => {
     });
     await newComment.save();
     //update comment count
-    await Posts.findByIdAndUpdate(postId, {
-      $inc: { commentCount: 1 },
-    });
+    await Posts.findByIdAndUpdate(
+      postId,
+      {
+        $inc: { commentCount: 1 },
+      },
+      { runValidators: true }
+    );
     res.status(200).json({
       message: "Comment added successfully",
       comment: newComment,
