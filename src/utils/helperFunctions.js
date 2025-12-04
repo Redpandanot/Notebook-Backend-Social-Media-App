@@ -128,27 +128,6 @@ const optimizeImages = (posts) => {
   return optimizedPosts;
 };
 
-const populateReplies = async (postId, parentCommentId) => {
-  const replies = await Comments.find({
-    postId: postId,
-    parentCommentId: parentCommentId,
-  })
-    .populate({
-      path: "userId",
-      select: "firstName lastName photo",
-    })
-    .lean()
-    .sort({ createdAt: 1 });
-
-  const nestedReplies = await Promise.all(
-    replies.map(async (parentComment) => {
-      parentComment.replies = await populateReplies(postId, parentComment._id);
-      return parentComment;
-    })
-  );
-  return nestedReplies;
-};
-
 const optimizedImg = (publicId, width) => {
   try {
     const optimizedUrl = cloudinary.url(publicId, {
@@ -192,12 +171,29 @@ const connectionStatus = async (user1, user2) => {
   return friendShipStatus ? friendShipStatus : false;
 };
 
+const recursiveNestedComment = (depth = 5) => {
+  if (depth === 0) return [];
+
+  return [
+    {
+      path: "replies",
+      populate: [
+        {
+          path: "userId",
+          select: "firstName lastName photo",
+        },
+        ...recursiveNestedComment(depth - 1),
+      ],
+    },
+  ];
+};
+
 module.exports = {
   createPost,
   optimizeImages,
-  populateReplies,
   optimizedImg,
   connectionMapper,
   isFollowing,
   connectionStatus,
+  recursiveNestedComment,
 };

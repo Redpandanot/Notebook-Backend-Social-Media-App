@@ -38,6 +38,11 @@ const commentSchema = new mongoose.Schema(
 );
 
 commentSchema.index({ postId: 1, userId: 1 });
+commentSchema.virtual("replies", {
+  ref: "Comments",
+  localField: "_id",
+  foreignField: "parentCommentId",
+});
 
 const commentModel = mongoose.model("Comments", commentSchema);
 
