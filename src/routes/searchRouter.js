@@ -4,6 +4,7 @@ const userAuth = require("../middlewares/userAuth");
 const User = require("../models/user");
 const Posts = require("../models/posts");
 const Comments = require("../models/comments");
+const Connections = require("../models/connections");
 const { userSafeData } = require("../utils/constants");
 
 searchRouter.get("/search", userAuth, async (req, res) => {
@@ -33,7 +34,10 @@ searchRouter.get("/search", userAuth, async (req, res) => {
           _id: { $ne: user },
         },
       ],
-    }).select(userSafeData);
+    })
+      .select(userSafeData)
+      .limit(10)
+      .lean();
 
     res.send(userList);
   } catch (error) {}
@@ -47,7 +51,7 @@ searchRouter.get("/search/all", userAuth, async (req, res) => {
       return res.status(400).send({ error: "Invalid or empty search query." });
     }
     const searchRegex = new RegExp(escapeRegex(searchQuery), "i");
-    const userList = await User.find({
+    const users = User.find({
       $and: [
         {
           $or: [
@@ -65,7 +69,7 @@ searchRouter.get("/search/all", userAuth, async (req, res) => {
       .select(userSafeData)
       .lean();
 
-    const postList = await Posts.find({
+    const posts = Posts.find({
       $or: [{ title: searchRegex }, { description: searchRegex }],
     })
       .populate({
@@ -74,7 +78,7 @@ searchRouter.get("/search/all", userAuth, async (req, res) => {
       })
       .lean();
 
-    const commentList = await Comments.find({
+    const comments = Comments.find({
       comment: searchRegex,
     })
       .populate({
@@ -82,6 +86,12 @@ searchRouter.get("/search/all", userAuth, async (req, res) => {
         select: "firstName lastName photo",
       })
       .lean();
+
+    const [userList, postList, commentList] = await Promise.all([
+      users,
+      posts,
+      comments,
+    ]);
 
     res.json({
       userList,
@@ -91,7 +101,71 @@ searchRouter.get("/search/all", userAuth, async (req, res) => {
   } catch (error) {}
 });
 
-searchRouter.get("search/friends", userAuth, async (req, res) => {}); //to search friends in chat section
+searchRouter.get("/search/friends", userAuth, async (req, res) => {
+  const user = req.user._id;
+  const searchQuery = req.query.query;
+  if (!searchQuery || typeof searchQuery !== "string") {
+    return res.status(400).send({ error: "Invalid or empty search query." });
+  }
+  const searchRegex = new RegExp(escapeRegex(searchQuery), "i");
+
+  const friends = await Connections.aggregate([
+    {
+      $match: {
+        $or: [
+          {
+            fromUserId: user,
+            status: "accepted",
+          },
+          {
+            toUserId: user,
+            status: "accepted",
+          },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "fromUserId",
+        foreignField: "_id",
+        as: "fromUserId",
+        pipeline: [
+          {
+            $project: {
+              password: 0,
+              passwordChangedAt: 0,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unwind: "$fromUserId",
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "toUserId",
+        foreignField: "_id",
+        as: "toUserId",
+        pipeline: [
+          {
+            $project: {
+              password: 0,
+              passwordChangedAt: 0,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unwind: "$toUserId",
+    },
+  ]);
+
+  res.send(friends);
+}); //to search friends in chat section
 
 function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
