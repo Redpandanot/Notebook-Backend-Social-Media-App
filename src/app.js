@@ -17,6 +17,7 @@ const limiter = rateLimit.rateLimit({
   message: { error: "Too many requests, please try again later." },
 });
 
+app.set("trust proxy", 1); // to stop nginx proxy from preventing the rate limiting from working
 app.use(limiter);
 
 app.use(
