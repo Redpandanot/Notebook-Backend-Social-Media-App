@@ -8,6 +8,18 @@ const rateLimit = require("express-rate-limit");
 
 const app = express();
 
+app.set("trust proxy", 1); // to stop nginx proxy from preventing the rate limiting from working
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+
+app.use(express.json());
+app.use(cookieParser());
+
 //basic verison of rate limiting
 const limiter = rateLimit.rateLimit({
   windowMs: 5 * 60 * 1000,
@@ -16,18 +28,7 @@ const limiter = rateLimit.rateLimit({
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later." },
 });
-
-app.set("trust proxy", 1); // to stop nginx proxy from preventing the rate limiting from working
 app.use(limiter);
-
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
-app.use(express.json());
-app.use(cookieParser());
 
 const initializeSocket = require("./utils/socket");
 const authRouter = require("./routes/auth");
