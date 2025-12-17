@@ -4,8 +4,20 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 require("dotenv").config();
 const http = require("http");
+const rateLimit = require("express-rate-limit");
 
 const app = express();
+
+//basic verison of rate limiting
+const limiter = rateLimit.rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+});
+
+app.use(limiter);
 
 app.use(
   cors({
